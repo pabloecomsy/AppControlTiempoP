@@ -17,9 +17,7 @@ struct TiempoPWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: UsageProvider()) { entry in
             UsageWidgetView(entry: entry)
-                .containerBackground(for: .widget) {
-                    Color(.systemBackground)
-                }
+                .containerBackground(.background, for: .widget)
         }
         .configurationDisplayName("Tiempo de hoy")
         .description("Instagram, Facebook, navegador y total del iPhone. Se reinicia a las 12:00 am.")

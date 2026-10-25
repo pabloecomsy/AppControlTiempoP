@@ -2,8 +2,8 @@
 // ----------------
 // Lo ejecutan las automatizaciones de Atajos cuando se abre o se cierra una app.
 // Parámetro de texto que recibe desde Atajos:  "instagram abrir", "chrome cerrar", "facebook open", …
-// Si lo abres a mano dentro de Scriptable (sin parámetro) muestra el resumen de hoy
-// y deja reiniciar el día.
+// Si lo abres a mano dentro de Scriptable (sin parámetro) muestra el resumen de hoy,
+// los últimos eventos recibidos y deja reiniciar el día.
 //
 // Guarda todo en un archivo JSON dentro de Scriptable. El widget "TiempoP Widget" lo lee.
 
@@ -16,7 +16,8 @@ const ALIAS = {
 const OPEN_WORDS  = ["abrir", "abre", "abierto", "abierta", "open", "opened", "inicio"];
 const CLOSE_WORDS = ["cerrar", "cierra", "cerrado", "cerrada", "close", "closed", "fin"];
 // Si una sesión queda "abierta" porque iOS no avisó el cierre, no se cuenta más que esto.
-const MAX_SESSION_MIN = 180;
+const MAX_SESSION_MIN = 90;
+const LOG_LIMIT = 40;
 const FILE = "tiempop.json";
 
 // ---------- almacenamiento ----------
@@ -27,9 +28,10 @@ function pad(n) { return String(n).padStart(2, "0"); }
 function dayKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
 function parseDayKey(k) { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d); }
+function hhmm(ts) { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 
 function emptyDay(key) {
-  return { dayKey: key, seconds: {}, openAt: {}, updatedAt: null, history: [] };
+  return { dayKey: key, seconds: {}, openAt: {}, updatedAt: null, history: [], log: [] };
 }
 
 function load(now = new Date()) {
@@ -41,6 +43,7 @@ function load(now = new Date()) {
   if (!data.seconds) data.seconds = {};
   if (!data.openAt) data.openAt = {};
   if (!data.history) data.history = [];
+  if (!data.log) data.log = [];
 
   // Cambio de día: se cierran las sesiones abiertas al final del día guardado,
   // se archiva ese día y las sesiones siguen abiertas desde las 00:00 de hoy.
@@ -70,6 +73,11 @@ function save(data) {
   fm.writeString(path, JSON.stringify(data));
 }
 
+function log(data, now, raw, result) {
+  data.log.push({ t: now.getTime(), p: String(raw).slice(0, 40), r: result });
+  if (data.log.length > LOG_LIMIT) data.log = data.log.slice(-LOG_LIMIT);
+}
+
 // ---------- lógica ----------
 function closeSession(data, slot, now) {
   const openAt = data.openAt[slot];
@@ -81,8 +89,9 @@ function closeSession(data, slot, now) {
 }
 
 function openSession(data, slot, now) {
-  // Si ya había una sesión abierta (se perdió el aviso de cierre) la cerramos primero.
-  if (data.openAt[slot]) closeSession(data, slot, now);
+  // Solo una app puede estar en pantalla a la vez: abrir una cierra las demás.
+  // También cierra una sesión previa de la misma app si se perdió su aviso de cierre.
+  for (const s of Object.keys(data.openAt)) closeSession(data, s, now);
   data.openAt[slot] = now.getTime();
 }
 
@@ -101,10 +110,16 @@ function fmt(min) {
   return `${h} h ${m} min`;
 }
 
-function parseParam(raw) {
-  if (raw == null) return { slot: null, event: null };
-  if (typeof raw !== "string") raw = JSON.stringify(raw);
-  const tokens = raw.toLowerCase().split(/[^a-záéíóúñ]+/).filter(Boolean);
+function rawText(raw) {
+  if (raw == null) return null;
+  if (typeof raw === "string") return raw;
+  if (Array.isArray(raw)) return raw.map(String).join(" ");
+  try { return JSON.stringify(raw); } catch (e) { return String(raw); }
+}
+
+function parseParam(text) {
+  if (text == null) return { slot: null, event: null };
+  const tokens = text.toLowerCase().split(/[^a-záéíóúñ]+/).filter(Boolean);
   let slot = null, event = null;
   for (const t of tokens) {
     if (ALIAS[t]) slot = ALIAS[t];
@@ -118,40 +133,49 @@ function parseParam(raw) {
 // ---------- ejecución ----------
 const now = new Date();
 const data = load(now);
-const raw = args.shortcutParameter ?? (args.queryParameters && args.queryParameters.evento) ?? null;
+const raw = rawText(args.shortcutParameter ?? (args.queryParameters && args.queryParameters.evento) ?? null);
 const { slot, event } = parseParam(raw);
 
 if (event === "reset") {
   const fresh = emptyDay(dayKey(now));
   fresh.history = data.history;
+  fresh.log = data.log;
+  log(fresh, now, raw, "reinicio");
   save(fresh);
   Script.setShortcutOutput("TiempoP: día reiniciado");
 } else if (slot && event === "open") {
   openSession(data, slot, now);
   data.updatedAt = now.getTime();
+  log(data, now, raw, "ok");
   save(data);
   Script.setShortcutOutput(`${slot}: ${fmt(minutesToday(data, slot, now))} hoy`);
 } else if (slot && event === "close") {
+  const wasOpen = !!data.openAt[slot];
   closeSession(data, slot, now);
   data.updatedAt = now.getTime();
+  log(data, now, raw, wasOpen ? "ok" : "ya estaba cerrada");
   save(data);
   Script.setShortcutOutput(`${slot}: ${fmt(minutesToday(data, slot, now))} hoy`);
-} else if (config.runsInApp) {
-  // Abierto a mano: resumen y opción de reiniciar.
+} else if (raw == null && config.runsInApp) {
+  // Abierto a mano: resumen, últimos eventos y opción de reiniciar.
   const lines = SLOTS.map(s => `${s}: ${fmt(minutesToday(data, s, now))}${data.openAt[s] ? " (abierta)" : ""}`);
+  const events = data.log.slice(-10).reverse().map(e => `${hhmm(e.t)}  ${e.p}${e.r === "ok" ? "" : "  ⚠️ " + e.r}`);
   const a = new Alert();
   a.title = `Hoy ${data.dayKey}`;
-  a.message = lines.join("\n");
+  a.message = lines.join("\n") + "\n\nÚltimos eventos:\n" + (events.length ? events.join("\n") : "ninguno todavía");
   a.addAction("OK");
   a.addDestructiveAction("Reiniciar hoy");
   const idx = await a.presentAlert();
   if (idx === 1) {
     const fresh = emptyDay(dayKey(now));
     fresh.history = data.history;
+    fresh.log = data.log;
+    log(fresh, now, "(manual)", "reinicio");
     save(fresh);
   }
 } else {
-  save(data); // al menos aplica el cambio de día
+  log(data, now, raw, "no reconocido");
+  save(data);
   Script.setShortcutOutput("TiempoP: parámetro no reconocido. Usa por ejemplo «instagram abrir».");
 }
 

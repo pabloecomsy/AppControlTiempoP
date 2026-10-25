@@ -10,11 +10,11 @@
 // Metas diarias en minutos (solo colorean las barras: verde / naranja / rojo).
 const GOALS = { instagram: 30, facebook: 30, chrome: 60 };
 const TITLES = { instagram: "Instagram", facebook: "Facebook", chrome: "Chrome" };
-const SHORT = { instagram: "IG", facebook: "FB", chrome: "Chr" };
+const SHORT = { instagram: "IG", facebook: "FB", chrome: "Chrome" };
 const SYMBOLS = { instagram: "camera.fill", facebook: "person.2.fill", chrome: "globe" };
 const COLORS = { instagram: "#DB408C", facebook: "#296BDB", chrome: "#1A9ECC" };
 const SLOTS = ["instagram", "facebook", "chrome"];
-const MAX_SESSION_MIN = 180;
+const MAX_SESSION_MIN = 90;
 const FILE = "tiempop.json";
 const REFRESH_MINUTES = 5;
 
@@ -152,27 +152,37 @@ w.refreshAfterDate = new Date(now.getTime() + REFRESH_MINUTES * 60000);
 const isAccessory = family.startsWith("accessory");
 
 if (family === "accessoryRectangular") {
-  w.addAccessoryWidgetBackground = true;
-  w.setPadding(4, 6, 4, 6);
+  // Tres columnas: etiqueta arriba, tiempo grande en medio, barra contra la meta abajo.
+  // Es el tamaño más grande que iOS permite en la pantalla de bloqueo, así que se
+  // prioriza el número y se eliminan los nombres largos.
+  w.setPadding(0, 0, 0, 0);
+  const cols = w.addStack();
+  cols.layoutHorizontally();
+  cols.centerAlignContent();
+  cols.spacing = 6;
   for (const s of SLOTS) {
-    const row = w.addStack();
-    row.layoutHorizontally();
-    row.centerAlignContent();
-    row.spacing = 4;
-    const img = row.addImage(symbolImage(SYMBOLS[s], 10));
-    img.imageSize = new Size(12, 12);
-    img.tintColor = Color.white();
-    const t = row.addText(TITLES[s]);
-    t.font = Font.mediumSystemFont(11);
+    const col = cols.addStack();
+    col.layoutVertically();
+    col.spacing = 2;
+    col.size = new Size(50, 0);
+
+    const head = col.addStack();
+    head.layoutHorizontally();
+    head.centerAlignContent();
+    const t = head.addText(SHORT[s]);
+    t.font = Font.semiboldSystemFont(12);
     t.textColor = Color.white();
     t.lineLimit = 1;
-    row.addSpacer();
-    const v = row.addText(compact(minutes[s]));
-    v.font = Font.boldMonospacedSystemFont(12);
+    head.addSpacer();
+
+    const v = col.addText(compact(minutes[s]));
+    v.font = Font.boldRoundedSystemFont(22);
     v.textColor = Color.white();
     v.lineLimit = 1;
-    const b = row.addImage(barImage(40, 4, ratio(minutes[s], GOALS[s]), Color.white()));
-    b.imageSize = new Size(40, 4);
+    v.minimumScaleFactor = 0.6;
+
+    const b = col.addImage(barImage(50, 4, ratio(minutes[s], GOALS[s]), Color.white()));
+    b.imageSize = new Size(50, 4);
   }
 
 } else if (family === "accessoryCircular") {
@@ -195,7 +205,7 @@ if (family === "accessoryRectangular") {
   inner.addSpacer();
 
 } else if (family === "accessoryInline") {
-  w.addText(`IG ${compact(minutes.instagram)} · FB ${compact(minutes.facebook)} · Chr ${compact(minutes.chrome)}`);
+  w.addText(`IG ${compact(minutes.instagram)} · FB ${compact(minutes.facebook)} · Chrome ${compact(minutes.chrome)}`);
 
 } else if (family === "small") {
   w.backgroundColor = Color.dynamic(new Color("#FFFFFF"), new Color("#1C1C1E"));

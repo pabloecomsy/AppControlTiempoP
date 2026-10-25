@@ -1,0 +1,135 @@
+# Proyecto generado con XcodeGen:  brew install xcodegen && xcodegen generate
+#
+# Antes de generar, cambia estas dos cosas:
+#   1. bundleIdPrefix (abajo) y los PRODUCT_BUNDLE_IDENTIFIER de cada target.
+#   2. El App Group "group.com.ecomsy.tiempop" aquí Y en Shared/AppGroup.swift.
+# DEVELOPMENT_TEAM se puede dejar vacío y elegir el equipo en Xcode (Signing & Capabilities).
+
+name: TiempoP
+options:
+  bundleIdPrefix: com.ecomsy
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_STRICT_CONCURRENCY: minimal
+
+targets:
+
+  # ---------------------------------------------------------------------------
+  # App principal: autorización, selección de apps, arranque del monitoreo y
+  # vista "Hoy" (espejo del widget).
+  # ---------------------------------------------------------------------------
+  TiempoP:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - Shared
+    entitlements:
+      path: App/TiempoP.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - group.com.ecomsy.tiempop
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: TiempoP
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ecomsy.tiempop
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    dependencies:
+      - target: TiempoPMonitor
+        embed: true
+      - target: TiempoPWidget
+        embed: true
+
+  # ---------------------------------------------------------------------------
+  # Extensión DeviceActivityMonitor: iOS la despierta cuando el uso de una app
+  # cruza un umbral o cuando empieza/termina el día. Escribe en el App Group.
+  # ---------------------------------------------------------------------------
+  TiempoPMonitor:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Monitor
+      - Shared
+    entitlements:
+      path: Monitor/TiempoPMonitor.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - group.com.ecomsy.tiempop
+    info:
+      path: Monitor/Info.plist
+      properties:
+        CFBundleDisplayName: TiempoP Monitor
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).MonitorExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ecomsy.tiempop.monitor
+        SKIP_INSTALL: YES
+
+  # ---------------------------------------------------------------------------
+  # Extensión WidgetKit: Lock Screen (rectangular, circular, inline),
+  # Home Screen (small, medium) y StandBy. Solo lee del App Group.
+  # ---------------------------------------------------------------------------
+  TiempoPWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widget
+      - Shared
+    entitlements:
+      path: Widget/TiempoPWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.ecomsy.tiempop
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: TiempoP Widget
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ecomsy.tiempop.widget
+        SKIP_INSTALL: YES
+
+schemes:
+  TiempoP:
+    build:
+      targets:
+        TiempoP: all
+        TiempoPMonitor: all
+        TiempoPWidget: all
+    run:
+      config: Debug
+    archive:
+      config: Release

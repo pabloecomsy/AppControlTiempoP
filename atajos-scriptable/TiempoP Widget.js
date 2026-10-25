@@ -146,58 +146,87 @@ for (const s of SLOTS) minutes[s] = minutesToday(data, s, now);
 const total = SLOTS.reduce((a, s) => a + minutes[s], 0);
 const anyOpen = SLOTS.some(s => data.openAt[s]);
 
-const family = config.widgetFamily || (args.widgetParameter || "medium");
+// Parámetro del widget (opcional): qué apps mostrar. Ejemplos: "instagram",
+// "facebook chrome", "ig fb". Vacío = las tres. Menos apps = números más grandes.
+const PARAM_ALIAS = {
+  ig: "instagram", insta: "instagram", instagram: "instagram",
+  fb: "facebook", face: "facebook", facebook: "facebook",
+  chrome: "chrome", chr: "chrome", web: "chrome", navegador: "chrome",
+};
+function chosenSlots(raw) {
+  if (!raw) return SLOTS;
+  const picked = [];
+  for (const t of String(raw).toLowerCase().split(/[^a-z]+/)) {
+    const s = PARAM_ALIAS[t];
+    if (s && !picked.includes(s)) picked.push(s);
+  }
+  return picked.length ? picked : SLOTS;
+}
+const chosen = chosenSlots(args.widgetParameter);
+
+const family = config.widgetFamily || "medium";
 const w = new ListWidget();
 w.refreshAfterDate = new Date(now.getTime() + REFRESH_MINUTES * 60000);
 const isAccessory = family.startsWith("accessory");
 
 if (family === "accessoryRectangular") {
-  // Tres columnas: etiqueta arriba, tiempo grande en medio, barra contra la meta abajo.
-  // Es el tamaño más grande que iOS permite en la pantalla de bloqueo, así que se
-  // prioriza el número y se eliminan los nombres largos.
+  // Columnas: etiqueta arriba, tiempo grande en medio, barra contra la meta abajo.
+  // El rectangular es el tamaño más grande que iOS permite en la pantalla de
+  // bloqueo; con 1 o 2 apps por widget los números crecen.
+  const n = chosen.length;
+  const colW = n === 1 ? 150 : n === 2 ? 74 : 50;
+  const valueSize = n === 1 ? 36 : n === 2 ? 30 : 22;
   w.setPadding(0, 0, 0, 0);
   const cols = w.addStack();
   cols.layoutHorizontally();
   cols.centerAlignContent();
-  cols.spacing = 6;
-  for (const s of SLOTS) {
+  cols.spacing = n === 1 ? 0 : 6;
+  for (const s of chosen) {
     const col = cols.addStack();
     col.layoutVertically();
-    col.spacing = 2;
-    col.size = new Size(50, 0);
+    col.spacing = n === 1 ? 1 : 2;
+    col.size = new Size(colW, 0);
 
     const head = col.addStack();
     head.layoutHorizontally();
     head.centerAlignContent();
-    const t = head.addText(SHORT[s]);
+    const t = head.addText(n === 1 ? TITLES[s] : SHORT[s]);
     t.font = Font.semiboldSystemFont(12);
     t.textColor = Color.white();
     t.lineLimit = 1;
+    t.minimumScaleFactor = 0.6;
     head.addSpacer();
+    if (n === 1) {
+      const g = head.addText(`meta ${short(GOALS[s])}`);
+      g.font = Font.systemFont(10);
+      g.textColor = new Color("#FFFFFF", 0.7);
+      g.lineLimit = 1;
+    }
 
     const v = col.addText(compact(minutes[s]));
-    v.font = Font.boldRoundedSystemFont(22);
+    v.font = Font.boldRoundedSystemFont(valueSize);
     v.textColor = Color.white();
     v.lineLimit = 1;
-    v.minimumScaleFactor = 0.6;
+    v.minimumScaleFactor = 0.5;
 
-    const b = col.addImage(barImage(50, 4, ratio(minutes[s], GOALS[s]), Color.white()));
-    b.imageSize = new Size(50, 4);
+    const b = col.addImage(barImage(colW, n === 1 ? 5 : 4, ratio(minutes[s], GOALS[s]), Color.white()));
+    b.imageSize = new Size(colW, n === 1 ? 5 : 4);
   }
 
 } else if (family === "accessoryCircular") {
   w.addAccessoryWidgetBackground = true;
   w.setPadding(0, 0, 0, 0);
-  // Anillo de Instagram contra su meta, con el tiempo en el centro.
+  // Anillo de una app (la primera del parámetro; Instagram por defecto) contra su meta.
+  const cs = chosen.length === SLOTS.length ? "instagram" : chosen[0];
   const ring = w.addStack();
   ring.size = new Size(58, 58);
-  ring.backgroundImage = ringImage(58, ratio(minutes.instagram, GOALS.instagram), Color.white(), 5);
+  ring.backgroundImage = ringImage(58, ratio(minutes[cs], GOALS[cs]), Color.white(), 5);
   ring.layoutVertically();
   ring.centerAlignContent();
   const inner = ring.addStack();
   inner.layoutHorizontally();
   inner.addSpacer();
-  const v = inner.addText(compact(minutes.instagram));
+  const v = inner.addText(compact(minutes[cs]));
   v.font = Font.boldRoundedSystemFont(13);
   v.textColor = Color.white();
   v.minimumScaleFactor = 0.6;

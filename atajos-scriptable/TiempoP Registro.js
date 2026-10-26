@@ -7,7 +7,7 @@
 //
 // Guarda todo en un archivo JSON dentro de Scriptable. El widget "TiempoP Widget" lo lee.
 
-const VERSION = "2026-10-26.4";
+const VERSION = "2026-10-26.5";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const ALIAS = {
   ig: "instagram", insta: "instagram", instagram: "instagram",
@@ -80,8 +80,16 @@ function save(data) {
   fm.writeString(path, JSON.stringify(data));
 }
 
+// De dónde se ejecutó el script; ayuda a encontrar ejecuciones que no son de Atajos.
+function source() {
+  if (config.runsInWidget) return "widget";
+  if (config.runsInApp) return "app";
+  if (config.runsWithSiri) return "siri";
+  return "atajos";
+}
+
 function log(data, now, raw, result) {
-  data.log.push({ t: now.getTime(), p: String(raw).slice(0, 40), r: result });
+  data.log.push({ t: now.getTime(), p: String(raw).slice(0, 40), r: result, s: source() });
   if (data.log.length > LOG_LIMIT) data.log = data.log.slice(-LOG_LIMIT);
 }
 
@@ -174,6 +182,14 @@ function parseParam(text) {
 }
 
 // ---------- ejecución ----------
+if (config.runsInWidget) {
+  const w = new ListWidget();
+  const t = w.addText("Este widget usa «TiempoP Registro». Mantén presionado › Editar y elige «TiempoP Widget» en Script.");
+  t.font = Font.systemFont(11);
+  t.minimumScaleFactor = 0.6;
+  Script.setWidget(w);
+} else {
+
 const now = new Date();
 const data = load(now);
 const raw = rawText(args.shortcutParameter ?? (args.queryParameters && args.queryParameters.evento) ?? null);
@@ -208,7 +224,10 @@ if (event === "reset") {
   const rec = Math.floor(longestGap(withOpen, now.getTime(), openNow) / 60000);
   lines.push("", `Récord sin redes hoy: ${withOpen.length ? fmt(rec) : "—"}`);
   if (!openNow && data.lastCloseAt) lines.push(`Llevas sin redes: ${fmt(Math.floor((now.getTime() - data.lastCloseAt) / 60000))}`);
-  const events = data.log.slice(-10).reverse().map(e => `${hhmm(e.t)}  ${e.p}${e.r === "ok" ? "" : "  ⚠️ " + e.r}`);
+  const events = data.log.slice(-10).reverse().map(e => {
+    const note = e.r === "ok" ? "" : e.r === "reinicio" ? "  ↺ reinicio" : `  ⚠️ ${e.r}${e.s && e.s !== "atajos" ? " (" + e.s + ")" : ""}`;
+    return `${hhmm(e.t)}  ${e.r === "reinicio" && e.p === "(manual)" ? "" : e.p}${note}`.replace(/  +/g, "  ");
+  });
   const a = new Alert();
   a.title = `Hoy ${data.dayKey}  ·  v${VERSION}`;
   a.message = lines.join("\n") + "\n\nÚltimos eventos:\n" + (events.length ? events.join("\n") : "ninguno todavía");
@@ -227,6 +246,8 @@ if (event === "reset") {
   log(data, now, raw, "no reconocido");
   save(data);
   Script.setShortcutOutput("TiempoP: parámetro no reconocido. Usa por ejemplo «instagram abrir».");
+}
+
 }
 
 Script.complete();

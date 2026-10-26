@@ -330,6 +330,17 @@ if (offlineMode) {
   ring.backgroundImage = ringImage(58, ratio(minutes[cs], GOALS[cs]), Color.white(), 5);
   ring.layoutVertically();
   ring.centerAlignContent();
+  ring.spacing = 0;
+  // Etiqueta pequeña para saber de qué app es el anillo.
+  const labelRow = ring.addStack();
+  labelRow.layoutHorizontally();
+  labelRow.addSpacer();
+  const lbl = labelRow.addText(SHORT[cs]);
+  lbl.font = Font.semiboldSystemFont(9);
+  lbl.textColor = new Color("#FFFFFF", 0.8);
+  lbl.lineLimit = 1;
+  lbl.minimumScaleFactor = 0.7;
+  labelRow.addSpacer();
   const inner = ring.addStack();
   inner.layoutHorizontally();
   inner.addSpacer();

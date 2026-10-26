@@ -63,8 +63,10 @@ Comprobación rápida: abre Instagram, espera 10 segundos, ciérrala (vuelve al 
 
 Agrega otro widget de Scriptable con el script **TiempoP Widget** y en **Parameter** escribe `sin redes`.
 
-- **Pantalla de bloqueo, rectangular:** "Llevas sin redes" con un contador en vivo desde la última vez que cerraste Instagram, Facebook o Chrome, y abajo el récord del día.
+- **Pantalla de bloqueo, rectangular:** "Llevas sin redes" con el tiempo desde la última vez que cerraste Instagram, Facebook o Chrome, y abajo el récord del día y la hora de la última actualización ("act. 5:07").
 - **Pantalla de inicio, pequeño o mediano:** "Mayor tiempo sin redes hoy" en grande y, abajo, cuánto llevas ahora.
+
+iOS decide cuándo redibuja los widgets (normalmente cada 5 a 20 minutos) y Atajos no puede forzarlo. Por eso no hay cronómetro en vivo: seguiría corriendo aunque acabaras de usar Instagram. La hora "act." te dice qué tan fresco es el dato. Para actualizarlo al instante, en la configuración del widget pon **When Interacting › Run Script** y tócalo.
 - **Circular y en línea:** la racha actual en corto.
 
 El récord del día es el mayor hueco entre dos usos de esas apps, contando desde el primer uso del día, más el hueco actual si ahora no estás en ninguna. La noche no cuenta como récord del día anterior. iOS no permite a Atajos saber cuándo desbloqueas el teléfono, así que mide tiempo sin redes, no tiempo sin tocar el iPhone.

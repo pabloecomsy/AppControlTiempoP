@@ -1,8 +1,9 @@
 // TiempoP Actualizar
 // ------------------
-// Descarga la última versión de "TiempoP Registro" y "TiempoP Widget" desde GitHub
-// y reemplaza los scripts que ya tienes en Scriptable, conservando sus nombres.
-// Tus datos (tiempos de hoy e historial) no se tocan.
+// Instalador y actualizador. En un iPhone nuevo basta con pegar este script y
+// ejecutarlo: descarga "TiempoP Registro" y "TiempoP Widget".
+// Después, cada vez que lo ejecutes, trae la última versión desde GitHub y
+// reemplaza los scripts conservando sus nombres. Tus datos no se tocan.
 
 const BASE = "https://raw.githubusercontent.com/pabloecomsy/AppControlTiempoP/claude/vibrant-newton-uj9hl3/atajos-scriptable/";
 const TARGETS = [
@@ -11,19 +12,27 @@ const TARGETS = [
   { remote: "TiempoP%20Actualizar.js", match: /^tiempo\s*p\s*actualizar\.js$/i, fallback: "TiempoP Actualizar.js" },
 ];
 
-// Los scripts viven en iCloud Drive/Scriptable si iCloud está activado; si no, en local.
-function scriptsManager() {
+// Los scripts se guardan junto a este mismo script, esté en iCloud Drive o en el
+// iPhone. Así funciona igual en una instalación nueva (solo con este script pegado)
+// que al actualizar.
+function scriptsLocation() {
+  const self = (typeof module !== "undefined" && module.filename) || "";
+  if (self) {
+    const fm = self.includes("Mobile Documents") ? FileManager.iCloud() : FileManager.local();
+    return { fm, dir: self.slice(0, self.lastIndexOf("/")) };
+  }
   try {
     const icloud = FileManager.iCloud();
-    const dir = icloud.documentsDirectory();
-    if (icloud.listContents(dir).some(n => /^tiempo\s*p/i.test(n))) return icloud;
+    const d = icloud.documentsDirectory();
+    if (icloud.listContents(d).some(n => /^tiempo\s*p/i.test(n))) return { fm: icloud, dir: d };
   } catch (e) {}
-  return FileManager.local();
+  const local = FileManager.local();
+  return { fm: local, dir: local.documentsDirectory() };
 }
 
-const fm = scriptsManager();
-const dir = fm.documentsDirectory();
+const { fm, dir } = scriptsLocation();
 const existing = fm.listContents(dir);
+const existingCount = existing.filter(n => /^tiempo\s*p\s*(registro|widget)\.js$/i.test(n)).length;
 const report = [];
 
 for (const t of TARGETS) {
@@ -46,7 +55,7 @@ for (const t of TARGETS) {
 }
 
 const a = new Alert();
-a.title = "TiempoP actualizado";
+a.title = existingCount ? "TiempoP actualizado" : "TiempoP instalado";
 a.message = report.join("\n") + "\n\nSi el widget no cambia de inmediato, espera unos minutos o quítalo y vuelve a ponerlo.";
 a.addAction("OK");
 await a.presentAlert();

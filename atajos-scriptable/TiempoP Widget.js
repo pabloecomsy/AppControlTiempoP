@@ -16,11 +16,13 @@ const TITLES = { instagram: "Instagram", facebook: "Facebook", chrome: "Chrome" 
 const SHORT = { instagram: "IG", facebook: "FB", chrome: "Chrome" };
 const SYMBOLS = { instagram: "camera.fill", facebook: "person.2.fill", chrome: "globe" };
 const COLORS = { instagram: "#DB408C", facebook: "#296BDB", chrome: "#1A9ECC" };
-const VERSION = "2026-10-26.2";
+const VERSION = "2026-10-26.3";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const MAX_SESSION_MIN = 90;
 const FILE = "tiempop.json";
-const REFRESH_MINUTES = 5;
+// Pedimos a iOS redibujar cada minuto. Es solo una sugerencia: iOS decide cuándo
+// lo hace (normalmente cada 5 a 20 min) y ni Atajos ni Scriptable pueden forzarlo.
+const REFRESH_MINUTES = 1;
 
 // ---------- almacenamiento (igual que en TiempoP Registro) ----------
 const fm = FileManager.local();
@@ -215,16 +217,14 @@ const hasRecord = sessionsNow.length > 0;
 const streakStart = !openNow && lastExit ? new Date(lastExit) : null;
 const streakMin = streakStart ? Math.floor((now.getTime() - streakStart.getTime()) / 60000) : 0;
 
-// Contador que iOS actualiza solo cada segundo, sin esperar al refresco del widget.
-function addLiveTimer(stack, since, size, color) {
-  const d = stack.addDate(since);
-  d.applyTimerStyle();
-  d.font = Font.boldRoundedSystemFont(size);
-  d.textColor = color;
-  d.lineLimit = 1;
-  d.minimumScaleFactor = 0.5;
-  return d;
+// Hora del último dibujo del widget ("5:07"). No se usa un cronómetro en vivo:
+// seguiría corriendo aunque abrieras Instagram, porque iOS no redibuja el widget
+// en el momento. Con la hora a la vista se sabe qué tan fresco es el dato.
+function clock(d) {
+  const h = d.getHours() % 12 || 12;
+  return `${h}:${pad(d.getMinutes())}`;
 }
+const fresh = `act. ${clock(now)}`;
 
 function renderOffline() {
   const white = Color.white();
@@ -253,13 +253,10 @@ function renderOffline() {
     w.setPadding(0, 0, 0, 0);
     const head = w.addText(openNow ? "En redes ahora" : "Llevas sin redes");
     head.font = Font.semiboldSystemFont(12); head.textColor = soft; head.lineLimit = 1;
-    if (openNow || !streakStart) {
-      const v = w.addText(openNow ? "—" : "usa una app");
-      v.font = Font.boldRoundedSystemFont(26); v.textColor = white; v.lineLimit = 1;
-    } else {
-      addLiveTimer(w, streakStart, 30, white);
-    }
-    const rec = w.addText(`Récord hoy ${hasRecord ? hm(recordMin) : "—"}`);
+    const v = w.addText(openNow ? "—" : streakStart ? short(streakMin) : "usa una app");
+    v.font = Font.boldRoundedSystemFont(streakStart || openNow ? 30 : 22);
+    v.textColor = white; v.lineLimit = 1; v.minimumScaleFactor = 0.5;
+    const rec = w.addText(`Récord ${hasRecord ? hm(recordMin) : "—"} · ${fresh}`);
     rec.font = Font.mediumSystemFont(12); rec.textColor = soft; rec.lineLimit = 1; rec.minimumScaleFactor = 0.7;
     return;
   }
@@ -280,13 +277,11 @@ function renderOffline() {
   const row = w.addStack();
   row.layoutHorizontally(); row.centerAlignContent(); row.spacing = 4;
   row.addSpacer();
-  const lbl = row.addText(openNow ? "Ahora estás en redes" : streakStart ? "Llevas" : "Usa una app para empezar");
-  lbl.font = Font.systemFont(12); lbl.textColor = soft;
-  if (!openNow && streakStart) {
-    const d = addLiveTimer(row, streakStart, 13, white);
-    d.font = Font.semiboldMonospacedSystemFont(13);
-  }
+  const lbl = row.addText(openNow ? "Ahora estás en redes" : streakStart ? `Llevas ${short(streakMin)} sin redes` : "Usa una app para empezar");
+  lbl.font = Font.systemFont(12); lbl.textColor = soft; lbl.lineLimit = 1; lbl.minimumScaleFactor = 0.7;
   row.addSpacer();
+  const f = w.addText(fresh);
+  f.font = Font.systemFont(10); f.textColor = new Color("#FFFFFF", 0.5); f.centerAlignText();
 }
 
 const family = config.widgetFamily || "medium";

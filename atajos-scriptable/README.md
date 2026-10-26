@@ -59,6 +59,18 @@ Comprobación rápida: abre Instagram, espera 10 segundos, ciérrala (vuelve al 
 
 **Pantalla de inicio:** mantén presionada → **Editar** → **Agregar widget** → **Scriptable** → **mediano** → tócalo → Script: **TiempoP Widget**. Es el diseño del boceto: tres filas con icono, barra y tiempo, y el total a la derecha.
 
+## Widget "sin redes"
+
+Agrega otro widget de Scriptable con el script **TiempoP Widget** y en **Parameter** escribe `sin redes`.
+
+- **Pantalla de bloqueo, rectangular:** "Llevas sin redes" con un contador en vivo desde la última vez que cerraste Instagram, Facebook o Chrome, y abajo el récord del día.
+- **Pantalla de inicio, pequeño o mediano:** "Mayor tiempo sin redes hoy" en grande y, abajo, cuánto llevas ahora.
+- **Circular y en línea:** la racha actual en corto.
+
+El récord del día es el mayor hueco entre dos usos de esas apps, contando desde el primer uso del día, más el hueco actual si ahora no estás en ninguna. La noche no cuenta como récord del día anterior. iOS no permite a Atajos saber cuándo desbloqueas el teléfono, así que mide tiempo sin redes, no tiempo sin tocar el iPhone.
+
+Otros parámetros del widget: `instagram`, `facebook chrome`, `ig fb`… para mostrar menos apps con números más grandes.
+
 ## Metas y colores
 
 En **TiempoP Widget**, arriba del todo, está `GOALS` con los minutos por app (30, 30, 60). Las barras van verde → naranja (60 %) → rojo (100 %). Cámbialos a tu gusto.

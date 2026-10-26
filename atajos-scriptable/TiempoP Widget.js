@@ -3,6 +3,9 @@
 // Widget de Scriptable. Lee el archivo que escribe "TiempoP Registro" y muestra el
 // tiempo de hoy en Instagram, Facebook y Chrome.
 //
+// Con el parámetro "sin redes" (o "racha", "offline") muestra cuánto llevas sin
+// abrir esas apps, con contador en vivo, y el récord del día.
+//
 // Tamaños: pantalla de bloqueo (rectangular, circular, en línea) y pantalla de
 // inicio (pequeño, mediano). Si una app está abierta ahora mismo, el tiempo
 // mostrado incluye la sesión en curso.
@@ -35,11 +38,13 @@ function load(now) {
   if (!data || !data.dayKey) data = { dayKey: dayKey(now), seconds: {}, openAt: {}, updatedAt: null, history: [] };
   if (!data.seconds) data.seconds = {};
   if (!data.openAt) data.openAt = {};
+  if (!data.sessions) data.sessions = [];
   const today = dayKey(now);
   if (data.dayKey !== today) {
     // El widget no escribe: solo muestra el día de hoy desde cero, respetando
     // las sesiones que siguen abiertas desde medianoche.
-    const fresh = { dayKey: today, seconds: {}, openAt: {}, updatedAt: null, history: data.history || [] };
+    const fresh = { dayKey: today, seconds: {}, openAt: {}, sessions: [], updatedAt: null,
+                    history: data.history || [], lastCloseAt: data.lastCloseAt };
     for (const slot of Object.keys(data.openAt)) fresh.openAt[slot] = startOfDay(now).getTime();
     data = fresh;
   }
@@ -54,7 +59,25 @@ function minutesToday(data, slot, now) {
   return Math.floor(s / 60);
 }
 
+// Mayor hueco entre sesiones de hoy (ms); igual que en TiempoP Registro.
+function longestGap(sessions, until, openNow = false) {
+  const list = sessions.slice().sort((a, b) => a[1] - b[1]);
+  if (!list.length) return 0;
+  let best = 0, end = list[0][2];
+  for (const [, start, stop] of list.slice(1)) {
+    if (start > end) best = Math.max(best, start - end);
+    end = Math.max(end, stop);
+  }
+  if (!openNow && until > end) best = Math.max(best, until - end);
+  return best;
+}
+
 // ---------- formato ----------
+// "3:42 h" o "42 min", como en la pantalla de referencia.
+function hm(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return h === 0 ? `${m} min` : `${h}:${pad(m)} h`;
+}
 function short(min) {
   const h = Math.floor(min / 60), m = min % 60;
   if (h === 0) return `${m}m`;
@@ -163,13 +186,97 @@ function chosenSlots(raw) {
   return picked.length ? picked : SLOTS;
 }
 const chosen = chosenSlots(args.widgetParameter);
+const offlineMode = /sin\s*redes|racha|offline|desconex|pausa/i.test(String(args.widgetParameter || ""));
+
+// Datos de "sin redes".
+const openNow = Object.keys(data.openAt).length > 0;
+const recordMin = Math.floor(longestGap(data.sessions, now.getTime(), openNow) / 60000);
+const hasRecord = data.sessions.length > 0;
+const streakStart = !openNow && data.lastCloseAt ? new Date(data.lastCloseAt) : null;
+const streakMin = streakStart ? Math.floor((now.getTime() - streakStart.getTime()) / 60000) : 0;
+
+// Contador que iOS actualiza solo cada segundo, sin esperar al refresco del widget.
+function addLiveTimer(stack, since, size, color) {
+  const d = stack.addDate(since);
+  d.applyTimerStyle();
+  d.font = Font.boldRoundedSystemFont(size);
+  d.textColor = color;
+  d.lineLimit = 1;
+  d.minimumScaleFactor = 0.5;
+  return d;
+}
+
+function renderOffline() {
+  const white = Color.white();
+  const soft = new Color("#FFFFFF", 0.75);
+  if (family === "accessoryInline") {
+    const now_ = openNow ? "en redes" : streakStart ? `sin redes ${compact(streakMin)}` : "sin datos";
+    w.addText(`${now_} · récord ${hasRecord ? compact(recordMin) : "—"}`);
+    return;
+  }
+  if (family === "accessoryCircular") {
+    w.addAccessoryWidgetBackground = true;
+    const st = w.addStack();
+    st.layoutVertically();
+    st.centerAlignContent();
+    const top = st.addStack(); top.addSpacer();
+    const i = top.addImage(symbolImage(openNow ? "iphone.radiowaves.left.and.right" : "leaf.fill", 12));
+    i.imageSize = new Size(14, 14); i.tintColor = white;
+    top.addSpacer();
+    const mid = st.addStack(); mid.addSpacer();
+    const v = mid.addText(openNow ? "uso" : streakStart ? compact(streakMin) : "—");
+    v.font = Font.boldRoundedSystemFont(14); v.textColor = white; v.minimumScaleFactor = 0.5; v.lineLimit = 1;
+    mid.addSpacer();
+    return;
+  }
+  if (family === "accessoryRectangular") {
+    w.setPadding(0, 0, 0, 0);
+    const head = w.addText(openNow ? "En redes ahora" : "Llevas sin redes");
+    head.font = Font.semiboldSystemFont(12); head.textColor = soft; head.lineLimit = 1;
+    if (openNow || !streakStart) {
+      const v = w.addText(openNow ? "—" : "sin datos");
+      v.font = Font.boldRoundedSystemFont(26); v.textColor = white; v.lineLimit = 1;
+    } else {
+      addLiveTimer(w, streakStart, 30, white);
+    }
+    const rec = w.addText(`Récord hoy ${hasRecord ? hm(recordMin) : "—"}`);
+    rec.font = Font.mediumSystemFont(12); rec.textColor = soft; rec.lineLimit = 1; rec.minimumScaleFactor = 0.7;
+    return;
+  }
+  // Pantalla de inicio: estilo de la imagen de referencia.
+  const g = new LinearGradient();
+  g.colors = [new Color("#1F3B2D"), new Color("#0E1A14")];
+  g.locations = [0, 1];
+  w.backgroundGradient = g;
+  const big = family === "small" ? 30 : 40;
+  w.setPadding(14, 16, 14, 16);
+  const t1 = w.addText("Mayor tiempo sin redes hoy");
+  t1.font = Font.mediumSystemFont(family === "small" ? 12 : 14); t1.textColor = white; t1.centerAlignText();
+  w.addSpacer(2);
+  const v = w.addText(hasRecord ? hm(recordMin) : "—");
+  v.font = Font.boldRoundedSystemFont(big); v.textColor = new Color("#A8DCFF");
+  v.centerAlignText(); v.lineLimit = 1; v.minimumScaleFactor = 0.6;
+  w.addSpacer(4);
+  const row = w.addStack();
+  row.layoutHorizontally(); row.centerAlignContent(); row.spacing = 4;
+  row.addSpacer();
+  const lbl = row.addText(openNow ? "Ahora estás en redes" : streakStart ? "Llevas" : "Sin datos todavía");
+  lbl.font = Font.systemFont(12); lbl.textColor = soft;
+  if (!openNow && streakStart) {
+    const d = addLiveTimer(row, streakStart, 13, white);
+    d.font = Font.semiboldMonospacedSystemFont(13);
+  }
+  row.addSpacer();
+}
 
 const family = config.widgetFamily || "medium";
 const w = new ListWidget();
 w.refreshAfterDate = new Date(now.getTime() + REFRESH_MINUTES * 60000);
 const isAccessory = family.startsWith("accessory");
 
-if (family === "accessoryRectangular") {
+if (offlineMode) {
+  renderOffline();
+} else if (family === "accessoryRectangular") {
   // Columnas: etiqueta arriba, tiempo grande en medio, barra contra la meta abajo.
   // El rectangular es el tamaño más grande que iOS permite en la pantalla de
   // bloqueo; con 1 o 2 apps por widget los números crecen.

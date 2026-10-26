@@ -31,7 +31,7 @@ function parseDayKey(k) { const [y, m, d] = k.split("-").map(Number); return new
 function hhmm(ts) { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 
 function emptyDay(key) {
-  return { dayKey: key, seconds: {}, openAt: {}, updatedAt: null, history: [], log: [] };
+  return { dayKey: key, seconds: {}, openAt: {}, sessions: [], updatedAt: null, history: [], log: [] };
 }
 
 function load(now = new Date()) {
@@ -44,6 +44,7 @@ function load(now = new Date()) {
   if (!data.openAt) data.openAt = {};
   if (!data.history) data.history = [];
   if (!data.log) data.log = [];
+  if (!data.sessions) data.sessions = [];
 
   // Cambio de día: se cierran las sesiones abiertas al final del día guardado,
   // se archiva ese día y las sesiones siguen abiertas desde las 00:00 de hoy.
@@ -53,17 +54,20 @@ function load(now = new Date()) {
     for (const slot of Object.keys(data.openAt)) {
       const elapsed = Math.max(0, Math.min(endOfStored - data.openAt[slot], MAX_SESSION_MIN * 60000));
       data.seconds[slot] = (data.seconds[slot] || 0) + elapsed / 1000;
+      data.sessions.push([slot, data.openAt[slot], data.openAt[slot] + elapsed]);
       data.openAt[slot] = startOfDay(now).getTime();
     }
     const hasUse = Object.values(data.seconds).some(s => s > 0);
     if (hasUse) {
       data.history = data.history.filter(h => h.dayKey !== data.dayKey);
-      data.history.push({ dayKey: data.dayKey, seconds: data.seconds });
+      data.history.push({ dayKey: data.dayKey, seconds: data.seconds,
+                          recordOfflineMin: Math.floor(longestGap(data.sessions, endOfStored, true) / 60000) });
       data.history.sort((a, b) => a.dayKey < b.dayKey ? -1 : 1);
       if (data.history.length > 30) data.history = data.history.slice(-30);
     }
     data.dayKey = today;
     data.seconds = {};
+    data.sessions = [];
     data.updatedAt = null;
   }
   return data;
@@ -84,6 +88,8 @@ function closeSession(data, slot, now) {
   if (!openAt) return 0;
   const elapsed = Math.max(0, Math.min(now.getTime() - openAt, MAX_SESSION_MIN * 60000));
   data.seconds[slot] = (data.seconds[slot] || 0) + elapsed / 1000;
+  data.sessions.push([slot, openAt, openAt + elapsed]);
+  data.lastCloseAt = Math.max(data.lastCloseAt || 0, openAt + elapsed);
   delete data.openAt[slot];
   return elapsed / 1000;
 }
@@ -93,6 +99,20 @@ function openSession(data, slot, now) {
   // También cierra una sesión previa de la misma app si se perdió su aviso de cierre.
   for (const s of Object.keys(data.openAt)) closeSession(data, s, now);
   data.openAt[slot] = now.getTime();
+}
+
+// Mayor hueco entre sesiones de hoy (ms). Cuenta desde el fin de la primera sesión;
+// si no hay ninguna app abierta, el hueco actual hasta `until` también cuenta.
+function longestGap(sessions, until, openNow = false) {
+  const list = sessions.slice().sort((a, b) => a[1] - b[1]);
+  if (!list.length) return 0;
+  let best = 0, end = list[0][2];
+  for (const [, start, stop] of list.slice(1)) {
+    if (start > end) best = Math.max(best, start - end);
+    end = Math.max(end, stop);
+  }
+  if (!openNow && until > end) best = Math.max(best, until - end);
+  return best;
 }
 
 function minutesToday(data, slot, now) {
@@ -140,6 +160,7 @@ if (event === "reset") {
   const fresh = emptyDay(dayKey(now));
   fresh.history = data.history;
   fresh.log = data.log;
+  fresh.lastCloseAt = data.lastCloseAt;
   log(fresh, now, raw, "reinicio");
   save(fresh);
   Script.setShortcutOutput("TiempoP: día reiniciado");
@@ -159,6 +180,10 @@ if (event === "reset") {
 } else if (raw == null && config.runsInApp) {
   // Abierto a mano: resumen, últimos eventos y opción de reiniciar.
   const lines = SLOTS.map(s => `${s}: ${fmt(minutesToday(data, s, now))}${data.openAt[s] ? " (abierta)" : ""}`);
+  const openNow = Object.keys(data.openAt).length > 0;
+  const rec = Math.floor(longestGap(data.sessions, now.getTime(), openNow) / 60000);
+  lines.push("", `Récord sin redes hoy: ${data.sessions.length ? fmt(rec) : "—"}`);
+  if (!openNow && data.lastCloseAt) lines.push(`Llevas sin redes: ${fmt(Math.floor((now.getTime() - data.lastCloseAt) / 60000))}`);
   const events = data.log.slice(-10).reverse().map(e => `${hhmm(e.t)}  ${e.p}${e.r === "ok" ? "" : "  ⚠️ " + e.r}`);
   const a = new Alert();
   a.title = `Hoy ${data.dayKey}`;
@@ -170,6 +195,7 @@ if (event === "reset") {
     const fresh = emptyDay(dayKey(now));
     fresh.history = data.history;
     fresh.log = data.log;
+    fresh.lastCloseAt = data.lastCloseAt;
     log(fresh, now, "(manual)", "reinicio");
     save(fresh);
   }

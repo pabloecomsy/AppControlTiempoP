@@ -12,7 +12,7 @@
 // Al doble del límite (2 h por defecto) la alerta pasa a tono de alarma.
 // Al salir de la app la cancela, así que solo suena si llegas al límite estando dentro.
 
-const VERSION = "2026-10-26.9";
+const VERSION = "2026-10-26.10";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const ALIAS = {
   ig: "instagram", insta: "instagram", instagram: "instagram",
@@ -95,7 +95,7 @@ function save(data) {
 function source() {
   if (config.runsInWidget) return "widget";
   if (config.runsInApp) return "app";
-  if (config.runsWithSiri) return "siri";
+  // Scriptable marca como "Siri" lo que se ejecuta desde Atajos.
   return "atajos";
 }
 

@@ -12,7 +12,7 @@
 // Al doble del límite (2 h por defecto) la alerta pasa a tono de alarma.
 // Al salir de la app la cancela, así que solo suena si llegas al límite estando dentro.
 
-const VERSION = "2026-10-26.8";
+const VERSION = "2026-10-26.9";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const ALIAS = {
   ig: "instagram", insta: "instagram", instagram: "instagram",
@@ -97,6 +97,33 @@ function source() {
   if (config.runsInApp) return "app";
   if (config.runsWithSiri) return "siri";
   return "atajos";
+}
+
+// Última vez que llegó cada aviso ("facebook abrir" → fecha). Sobrevive a reinicios
+// y a la bitácora corta; sirve para ver qué automatización no está funcionando.
+function markSeen(data, slot, event, now) {
+  data.seen = data.seen || {};
+  data.seen[`${slot} ${event}`] = now.getTime();
+}
+
+const SHORT_NAME = { instagram: "IG", facebook: "FB", chrome: "Chrome" };
+
+function seenReport(data, now) {
+  const seen = data.seen || {};
+  const today = dayKey(now);
+  const lines = [];
+  for (const slot of SLOTS) {
+    for (const [event, word] of [["open", "abrir"], ["close", "cerrar"]]) {
+      const t = seen[`${slot} ${event}`];
+      let when = "nunca";
+      if (t) {
+        const d = new Date(t);
+        when = dayKey(d) === today ? `hoy ${hhmm(t)}` : `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${hhmm(t)}`;
+      }
+      lines.push(`${t ? "✅" : "⚠️"} ${SHORT_NAME[slot]} ${word}: ${when}`);
+    }
+  }
+  return lines;
 }
 
 function log(data, now, raw, result) {
@@ -292,11 +319,13 @@ if (event === "reset") {
   fresh.log = data.log;
   fresh.lastCloseAt = data.lastCloseAt;
   fresh.settings = data.settings;
+  fresh.seen = data.seen;
   log(fresh, now, raw, "reinicio");
   save(fresh);
   Script.setShortcutOutput("TiempoP: día reiniciado");
 } else if (slot && event === "open") {
   openSession(data, slot, now);
+  markSeen(data, slot, "open", now);
   data.updatedAt = now.getTime();
   log(data, now, raw, "ok");
   await scheduleAlert(data, slot, now);
@@ -305,6 +334,7 @@ if (event === "reset") {
 } else if (slot && event === "close") {
   const wasOpen = !!data.openAt[slot];
   closeSession(data, slot, now);
+  markSeen(data, slot, "close", now);
   data.updatedAt = now.getTime();
   log(data, now, raw, wasOpen ? "ok" : "ya estaba cerrada");
   await cancelAlert();
@@ -327,6 +357,7 @@ if (event === "reset") {
     ? `Alerta: al llegar a ${fmt(limit)} en redes${ALERT_REPEAT_MIN ? `, luego cada ${ALERT_REPEAT_MIN} min` : ""}`
     : "Alerta: desactivada");
   if (data.alertError) lines.push(`⚠️ No se pudo programar: ${data.alertError}`);
+  lines.push("", "Último aviso de cada automatización:", ...seenReport(data, now));
   const a = new Alert();
   a.title = `Hoy ${data.dayKey}  ·  v${VERSION}`;
   a.message = lines.join("\n") + "\n\nÚltimos eventos:\n" + (events.length ? events.join("\n") : "ninguno todavía");
@@ -369,6 +400,7 @@ if (event === "reset") {
     fresh.log = data.log;
     fresh.lastCloseAt = data.lastCloseAt;
     fresh.settings = data.settings;
+  fresh.seen = data.seen;
     log(fresh, now, "(manual)", "reinicio");
     save(fresh);
   }

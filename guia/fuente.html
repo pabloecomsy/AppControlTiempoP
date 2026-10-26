@@ -276,7 +276,7 @@ footer { font-size: 14px; color: var(--muted); display: flex; flex-direction: co
 <section aria-labelledby="t-opciones">
   <span class="eyebrow">Paso previo · elige tu diseño</span>
   <h2 id="t-opciones">¿Cómo quieres verlo?</h2>
-  <p>En la pantalla de bloqueo caben dos rectangulares, o un rectangular y dos circulares, más uno en línea encima de la hora. Elige una combinación; más abajo, en el paso 6, la configuras con lo que dice cada tarjeta.</p>
+  <p>En la pantalla de bloqueo caben dos rectangulares, o un rectangular y dos circulares, más uno en línea encima de la hora. Elige una combinación; más abajo, en el paso 7, la configuras con lo que dice cada tarjeta.</p>
 
   <div class="cfg">
     <input class="cfg-radio" type="radio" name="cfg" id="cfg-b" checked>
@@ -497,6 +497,29 @@ footer { font-size: 14px; color: var(--muted); display: flex; flex-direction: co
       </ol>
     </li>
 
+    <li class="step" id="s5b">
+      <div class="step-head"><h3>Activa las alertas</h3><label class="done-toggle"><input type="checkbox" data-step="s5b"> Hecho</label></div>
+      <p>TiempoP te avisa con una notificación cuando sumas 1 hora entre Instagram, Facebook y Chrome, te recuerda cada 30 minutos y a las 2 horas cambia a tono de alarma. Solo suena si llegas al límite estando dentro de una de esas apps.</p>
+      <ol>
+        <li>Abre Scriptable y toca <b>TiempoP Registro</b>.</li>
+        <li>Toca <b>Probar alerta</b> y acepta cuando iOS pida permiso de notificaciones.</li>
+        <li>Sal de Scriptable. En unos 10 segundos debe llegar «Así se verá tu alerta».</li>
+        <li>Para cambiar el límite, toca <b>Cambiar límite de alerta</b> y escribe los minutos. Con <code>0</code> se desactiva.</li>
+      </ol>
+      <div class="matrix-wrap">
+        <table>
+          <thead><tr><th>Cuándo</th><th>Cómo se ve</th></tr></thead>
+          <tbody>
+            <tr><td>1 h</td><td>⏰ Llevas 1 h en redes hoy</td></tr>
+            <tr><td>1 h 30</td><td>Sigues en redes: 1 h 30 min hoy</td></tr>
+            <tr><td>2 h</td><td><b>🚨 YA SON 2 HORAS EN REDES</b>, con sonido de alerta</td></tr>
+            <tr><td>Cada 30 min después</td><td>🚨 en tono de alarma</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Si no llega la prueba, revisa Ajustes › Notificaciones › Scriptable.</p>
+    </li>
+
     <li class="step" id="s6">
       <div class="step-head"><h3>Pon los widgets</h3><label class="done-toggle"><input type="checkbox" data-step="s6"> Hecho</label></div>
       <p>Usa la combinación que elegiste arriba. Cada widget se configura igual; solo cambia el tamaño y lo que escribes en <b>Parameter</b>.</p>
@@ -568,6 +591,10 @@ footer { font-size: 14px; color: var(--muted); display: flex; flex-direction: co
     <details>
       <summary>En Últimos eventos aparece «no reconocido»</summary>
       <div><p>Una automatización corrió sin texto. Revisa que en las seis el <b>Parameter</b> diga «Texto» y que la caja Texto tenga lo de la tabla.</p></div>
+    </details>
+    <details>
+      <summary>No me llegan las alertas</summary>
+      <div><p>Abre <b>TiempoP Registro</b> y toca <b>Probar alerta</b>. Si no llega, activa las notificaciones de Scriptable en Ajustes › Notificaciones. Recuerda que la alerta solo suena si llegas al límite estando dentro de Instagram, Facebook o Chrome.</p></div>
     </details>
     <details>
       <summary>¿Cómo actualizo cuando haya mejoras?</summary>

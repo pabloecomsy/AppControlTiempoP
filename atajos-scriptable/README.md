@@ -73,6 +73,19 @@ El récord del día es el mayor hueco entre dos usos de esas apps, contando desd
 
 Otros parámetros del widget: `instagram`, `facebook chrome`, `ig fb`… para mostrar menos apps con números más grandes.
 
+## Alertas
+
+Al abrir Instagram, Facebook o Chrome, el registro programa una notificación para el momento en que el total del día en las tres llegue al límite. Al salir de la app la cancela, así que solo suena si llegas al límite estando dentro.
+
+| Cuándo | Notificación |
+|---|---|
+| 1 h | ⏰ Llevas 1 h en redes hoy |
+| 1 h 30 | Sigues en redes: 1 h 30 min hoy |
+| 2 h | 🚨 YA SON 2 HORAS EN REDES, con sonido de alerta |
+| Cada 30 min después | 🚨 en tono de alarma |
+
+Abre **TiempoP Registro** a mano para **Probar alerta** (la primera vez iOS pide permiso) o **Cambiar límite de alerta**. La alarma fuerte queda en el doble del límite; con `0` se desactiva. El límite se guarda con tus datos y no se pierde al actualizar.
+
 ## Metas y colores
 
 En **TiempoP Widget**, arriba del todo, está `GOALS` con los minutos por app (30, 30, 60). Las barras van verde → naranja (60 %) → rojo (100 %). Cámbialos a tu gusto.

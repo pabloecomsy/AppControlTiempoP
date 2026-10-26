@@ -7,7 +7,7 @@
 //
 // Guarda todo en un archivo JSON dentro de Scriptable. El widget "TiempoP Widget" lo lee.
 
-const VERSION = "2026-10-26.3";
+const VERSION = "2026-10-26.4";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const ALIAS = {
   ig: "instagram", insta: "instagram", instagram: "instagram",

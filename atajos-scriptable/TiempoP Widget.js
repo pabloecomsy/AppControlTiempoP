@@ -16,7 +16,7 @@ const TITLES = { instagram: "Instagram", facebook: "Facebook", chrome: "Chrome" 
 const SHORT = { instagram: "IG", facebook: "FB", chrome: "Chrome" };
 const SYMBOLS = { instagram: "camera.fill", facebook: "person.2.fill", chrome: "globe" };
 const COLORS = { instagram: "#DB408C", facebook: "#296BDB", chrome: "#1A9ECC" };
-const VERSION = "2026-10-26.3";
+const VERSION = "2026-10-26.4";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const MAX_SESSION_MIN = 90;
 const FILE = "tiempop.json";
@@ -319,7 +319,7 @@ if (offlineMode) {
     t.minimumScaleFactor = 0.6;
     head.addSpacer();
     if (n === 1) {
-      const g = head.addText(`meta ${short(GOALS[s])}`);
+      const g = head.addText(`meta ${short(GOALS[s])} · ${fresh}`);
       g.font = Font.systemFont(10);
       g.textColor = new Color("#FFFFFF", 0.7);
       g.lineLimit = 1;

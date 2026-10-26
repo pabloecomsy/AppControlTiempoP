@@ -1,0 +1,655 @@
+<title>TiempoP en tu iPhone</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Guía paso a paso para ver en la pantalla de bloqueo cuánto llevas hoy en Instagram, Facebook y Chrome, y cuánto llevas sin redes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: una columna de lectura; arriba el simulador de pantalla de bloqueo, abajo la receta en pasos. */
+:root {
+  --bg: #EDF3F7;
+  --surface: #FFFFFF;
+  --sunk: #E2EBF1;
+  --ink: #102230;
+  --muted: #566B7A;
+  --line: #CFDCE5;
+  --accent: #1E6A9E;
+  --accent-ink: #FFFFFF;
+  --warn-bg: #FFF4E0;
+  --warn-ink: #7A4A06;
+  --ok: #2E9E6A;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B141B; --surface: #13212B; --sunk: #0F1B23; --ink: #E3EDF3; --muted: #93A8B6;
+    --line: #233641; --accent: #7EC2EC; --accent-ink: #082033; --warn-bg: #2E2410; --warn-ink: #F3CF8E;
+    --ok: #5CCB97; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B141B; --surface: #13212B; --sunk: #0F1B23; --ink: #E3EDF3; --muted: #93A8B6;
+  --line: #233641; --accent: #7EC2EC; --accent-ink: #082033; --warn-bg: #2E2410; --warn-ink: #F3CF8E;
+  --ok: #5CCB97; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.55 var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(40px, 9vw, 64px); font-weight: 800; letter-spacing: -0.03em; line-height: 0.95; }
+h2 { font-size: clamp(24px, 5vw, 32px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+h3 { font-size: 19px; font-weight: 700; line-height: 1.25; }
+p { margin: 0; max-width: 65ch; }
+a { color: var(--accent); text-underline-offset: 3px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+.eyebrow {
+  font: 600 12px/1 var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+section { display: flex; flex-direction: column; gap: 16px; }
+.lead { font-size: 18px; color: var(--muted); }
+
+/* ---------- Hero ---------- */
+.hero { display: grid; gap: 24px; grid-template-columns: 1fr; align-items: center; }
+@media (min-width: 700px) { .hero { grid-template-columns: 1.1fr 0.9fr; } }
+.hero-copy { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 4px 0 0; list-style: none; }
+.facts li {
+  font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+
+/* ---------- Simulador de iPhone (un solo look, colores fijos a propósito) ---------- */
+.phone {
+  width: 268px; max-width: 100%; aspect-ratio: 9 / 19; margin: 0 auto;
+  border-radius: 44px; border: 7px solid #0E151B; position: relative; overflow: hidden;
+  background: linear-gradient(170deg, #6A9FC4 0%, #8FBCD9 48%, #C8E0EC 100%);
+  color: #FFFFFF; padding: 40px 14px 14px;
+  display: flex; flex-direction: column; align-items: center;
+  box-shadow: 0 18px 40px rgba(16, 34, 48, 0.22);
+  font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+}
+.phone::before {
+  content: ""; position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  width: 82px; height: 24px; border-radius: 14px; background: #0B0F13;
+}
+.ls-inline { font-size: 12.5px; font-weight: 600; text-align: center; opacity: 0.96; white-space: nowrap; }
+.ls-time {
+  font: 600 72px/1 ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  color: #E2F3FF; letter-spacing: -2px; margin-top: 2px; text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.ls-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: 100%; margin-top: 10px; }
+.ls-bottom { margin-top: auto; width: 100%; display: flex; justify-content: space-between; }
+.ls-bottom span { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.22); }
+
+.wr { grid-column: span 2; min-height: 58px; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; }
+.wr .lab { font-size: 9.5px; font-weight: 600; opacity: 0.8; display: flex; justify-content: space-between; gap: 4px; white-space: nowrap; }
+.wr .big { font: 700 24px/1.05 ui-rounded, "SF Pro Rounded", system-ui, sans-serif; }
+.wr .sub { font-size: 8.5px; font-weight: 500; opacity: 0.8; white-space: nowrap; }
+.tri { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.tri .big { font-size: 16px; }
+.bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.32); overflow: hidden; }
+.bar i { display: block; height: 100%; width: var(--w); background: #FFFFFF; border-radius: 2px; }
+.wc {
+  aspect-ratio: 1; border-radius: 50%; padding: 4px;
+  background: conic-gradient(#FFFFFF calc(var(--p) * 1%), rgba(255,255,255,0.28) 0);
+}
+.wc > div {
+  width: 100%; height: 100%; border-radius: 50%; background: #3F6E8F;
+  display: grid; place-content: center; text-align: center; line-height: 1.05;
+}
+.wc .l { font-size: 8px; font-weight: 600; opacity: 0.85; }
+.wc .v { font: 700 12px/1.1 ui-rounded, system-ui, sans-serif; }
+
+/* Pantalla de inicio */
+.home { padding-top: 44px; gap: 10px; background: linear-gradient(165deg, #3E6E8F 0%, #6C9BBB 55%, #A9CBE0 100%); }
+.hw { width: 100%; border-radius: 20px; padding: 11px 12px; }
+.hw-apps { background: #FFFFFF; color: #15202A; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.hw-rows { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.hw-row { display: grid; grid-template-columns: 20px 1fr; gap: 6px; align-items: center; }
+.dot { width: 20px; height: 20px; border-radius: 50%; display: grid; place-content: center; font-size: 7.5px; font-weight: 700; }
+.hw-row .t { display: flex; justify-content: space-between; font-size: 9.5px; font-weight: 600; }
+.hw-row .bar { height: 4px; background: #E6ECF0; margin-top: 2px; }
+.hw-total { text-align: center; padding-left: 8px; border-left: 1px solid #E6ECF0; }
+.hw-total .h { font-size: 8px; color: #6B7A86; }
+.hw-total .n { font: 700 17px/1.1 ui-rounded, system-ui, sans-serif; color: #E0892A; }
+.hw-off { background: linear-gradient(180deg, #1F3B2D, #0E1A14); color: #FFFFFF; text-align: center; padding: 14px 12px; }
+.hw-off .n { font: 700 30px/1.05 ui-rounded, system-ui, sans-serif; color: #A8DCFF; margin: 2px 0; }
+.hw-off .s { font-size: 9px; opacity: 0.8; }
+.icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; width: 100%; padding: 6px 8px 0; }
+.icons span { aspect-ratio: 1; border-radius: 12px; background: rgba(255,255,255,0.35); }
+
+/* ---------- Configurador (solo CSS: funciona aunque el visor no ejecute JavaScript) ---------- */
+.cfg-radio { position: absolute; opacity: 0; pointer-events: none; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; border-radius: 14px; background: var(--sunk); width: fit-content; max-width: 100%; }
+.seg label {
+  cursor: pointer; padding: 8px 12px; border-radius: 10px; font-weight: 600; font-size: 14px; color: var(--muted);
+  user-select: none;
+}
+#cfg-a:checked ~ .seg label[for="cfg-a"],
+#cfg-b:checked ~ .seg label[for="cfg-b"],
+#cfg-c:checked ~ .seg label[for="cfg-c"],
+#cfg-h:checked ~ .seg label[for="cfg-h"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(16,34,48,0.12); }
+#cfg-a:focus-visible ~ .seg label[for="cfg-a"],
+#cfg-b:focus-visible ~ .seg label[for="cfg-b"],
+#cfg-c:focus-visible ~ .seg label[for="cfg-c"],
+#cfg-h:focus-visible ~ .seg label[for="cfg-h"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.panel { display: none; gap: 24px; grid-template-columns: 1fr; align-items: start; margin-top: 18px; }
+@media (min-width: 640px) { .panel { grid-template-columns: auto 1fr; } }
+#cfg-a:checked ~ .panels .p-a,
+#cfg-b:checked ~ .panels .p-b,
+#cfg-c:checked ~ .panels .p-c,
+#cfg-h:checked ~ .panels .p-h { display: grid; }
+.how { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.how ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.how li {
+  display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: baseline;
+  padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line);
+}
+.kind { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.chip {
+  font-family: var(--font-mono); font-size: 13px; padding: 2px 8px; border-radius: 6px;
+  background: var(--sunk); border: 1px solid var(--line); white-space: nowrap;
+}
+.chip.empty { font-family: var(--font-body); font-style: italic; color: var(--muted); }
+
+/* ---------- Pasos ---------- */
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; counter-reset: step; }
+.step {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  padding: 18px; display: flex; flex-direction: column; gap: 12px; counter-increment: step;
+}
+.step-head { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; }
+.step-head::before {
+  content: counter(step); width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-content: center; font: 800 17px/1 var(--font-display);
+  background: var(--accent); color: var(--accent-ink);
+}
+.step.done .step-head::before { content: "✓"; background: var(--ok); }
+.done-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.done-toggle input { width: 18px; height: 18px; accent-color: var(--ok); }
+.step ol, .step ul { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+.step ol li::marker { font-weight: 700; color: var(--muted); }
+.note { font-size: 14px; color: var(--muted); }
+.warn {
+  background: var(--warn-bg); color: var(--warn-ink); border-radius: 12px; padding: 12px 14px;
+  font-size: 15px;
+}
+.warn b { font-weight: 700; }
+
+.codebox { position: relative; min-width: 0; }
+.codebox pre {
+  margin: 0; max-height: 220px; overflow: auto; padding: 14px; border-radius: 12px;
+  background: var(--sunk); border: 1px solid var(--line);
+  font: 500 11.5px/1.5 var(--font-mono); white-space: pre; -webkit-user-select: all; user-select: all;
+}
+.btn {
+  appearance: none; border: 0; cursor: pointer; font: 700 15px/1 var(--font-body);
+  padding: 12px 16px; border-radius: 12px; background: var(--accent); color: var(--accent-ink);
+  display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+}
+.btn:focus-visible, .copy-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.js-only { display: none; }
+.has-js .js-only { display: inline-flex; }
+.btn.copied { background: var(--ok); }
+
+/* Tabla de automatizaciones */
+.matrix-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 440px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); background: var(--sunk); }
+tr:last-child td { border-bottom: 0; }
+td input { width: 18px; height: 18px; accent-color: var(--ok); }
+.copy-chip { cursor: pointer; }
+.copy-chip.copied { background: var(--ok); color: #FFFFFF; border-color: var(--ok); }
+
+/* Problemas comunes */
+.faq { display: flex; flex-direction: column; gap: 8px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 16px; }
+summary { cursor: pointer; font-weight: 700; padding: 12px 0; list-style-position: outside; }
+details > div { padding: 0 0 14px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); }
+
+.limits { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 620px) { .limits { grid-template-columns: 1fr 1fr; } }
+.limits li { padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
+.limits b { display: block; margin-bottom: 4px; }
+
+footer { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 20px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .seg label, .copy-chip { transition: background-color 0.15s ease, color 0.15s ease; }
+}
+</style>
+<!--BODY-->
+<div class="wrap">
+
+<header class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow">Guía para iPhone · gratis · 15 minutos</span>
+    <h1>TiempoP</h1>
+    <p class="lead">Mira en la pantalla de bloqueo cuánto llevas hoy en Instagram, Facebook y Chrome, y cuánto tiempo llevas sin redes. Lo ves antes de desbloquear, que es justo cuando sirve.</p>
+    <ul class="facts">
+      <li>Sin cuentas</li>
+      <li>Sin pagar</li>
+      <li>Todo queda en tu iPhone</li>
+      <li>Se reinicia a las 12:00 am</li>
+    </ul>
+  </div>
+  <div class="phone" aria-label="Ejemplo de pantalla de bloqueo con los widgets de TiempoP">
+    <div class="ls-inline">IG 45m · FB 12m · Chrome 20m</div>
+    <div class="ls-time">9:41</div>
+    <div class="ls-row">
+      <div class="wr">
+        <div class="lab"><span>Llevas sin redes</span></div>
+        <div class="big">1h 12m</div>
+        <div class="sub">Récord 3:42 h · act. 9:40</div>
+      </div>
+      <div class="wc" style="--p:100"><div><span class="l">IG</span><span class="v">45m</span></div></div>
+      <div class="wc" style="--p:40"><div><span class="l">FB</span><span class="v">12m</span></div></div>
+    </div>
+    <div class="ls-bottom"><span></span><span></span></div>
+  </div>
+</header>
+
+<section aria-labelledby="t-opciones">
+  <span class="eyebrow">Paso previo · elige tu diseño</span>
+  <h2 id="t-opciones">¿Cómo quieres verlo?</h2>
+  <p>En la pantalla de bloqueo caben dos rectangulares, o un rectangular y dos circulares, más uno en línea encima de la hora. Elige una combinación; más abajo, en el paso 6, la configuras con lo que dice cada tarjeta.</p>
+
+  <div class="cfg">
+    <input class="cfg-radio" type="radio" name="cfg" id="cfg-b" checked>
+    <input class="cfg-radio" type="radio" name="cfg" id="cfg-a">
+    <input class="cfg-radio" type="radio" name="cfg" id="cfg-c">
+    <input class="cfg-radio" type="radio" name="cfg" id="cfg-h">
+    <div class="seg" role="presentation">
+      <label for="cfg-b">Equilibrado</label>
+      <label for="cfg-a">Instagram en grande</label>
+      <label for="cfg-c">Todo junto</label>
+      <label for="cfg-h">Pantalla de inicio</label>
+    </div>
+
+    <div class="panels">
+      <!-- B -->
+      <div class="panel p-b">
+        <div class="phone" aria-hidden="true">
+          <div class="ls-inline">IG 45m · FB 12m · Chrome 20m</div>
+          <div class="ls-time">9:41</div>
+          <div class="ls-row">
+            <div class="wr">
+              <div class="lab"><span>Llevas sin redes</span></div>
+              <div class="big">1h 12m</div>
+              <div class="sub">Récord 3:42 h · act. 9:40</div>
+            </div>
+            <div class="wc" style="--p:100"><div><span class="l">IG</span><span class="v">45m</span></div></div>
+            <div class="wc" style="--p:40"><div><span class="l">FB</span><span class="v">12m</span></div></div>
+          </div>
+          <div class="ls-bottom"><span></span><span></span></div>
+        </div>
+        <div class="how">
+          <h3>Equilibrado</h3>
+          <p class="note">Tu racha sin redes en grande y un anillo por app que se llena al llegar a tu meta.</p>
+          <ul>
+            <li><span class="kind">En línea</span><span><span class="chip empty">vacío</span> · encima de la hora</span></li>
+            <li><span class="kind">Rectangular</span><span><span class="chip">sin redes</span></span></li>
+            <li><span class="kind">Circular</span><span><span class="chip">instagram</span></span></li>
+            <li><span class="kind">Circular</span><span><span class="chip">facebook</span></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- A -->
+      <div class="panel p-a">
+        <div class="phone" aria-hidden="true">
+          <div class="ls-inline">IG 45m · FB 12m · Chrome 20m</div>
+          <div class="ls-time">9:41</div>
+          <div class="ls-row">
+            <div class="wr">
+              <div class="lab"><span>Instagram</span><span>meta 30m</span></div>
+              <div class="big">45m</div>
+              <div class="bar"><i style="--w:100%"></i></div>
+            </div>
+            <div class="wr">
+              <div class="lab"><span>Llevas sin redes</span></div>
+              <div class="big">1h 12m</div>
+              <div class="sub">Récord 3:42 h · act. 9:40</div>
+            </div>
+          </div>
+          <div class="ls-bottom"><span></span><span></span></div>
+        </div>
+        <div class="how">
+          <h3>Instagram en grande</h3>
+          <p class="note">Para quien quiere vigilar sobre todo Instagram. Dos rectangulares lado a lado.</p>
+          <ul>
+            <li><span class="kind">En línea</span><span><span class="chip empty">vacío</span> · encima de la hora</span></li>
+            <li><span class="kind">Rectangular</span><span><span class="chip">instagram</span></span></li>
+            <li><span class="kind">Rectangular</span><span><span class="chip">sin redes</span></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="panel p-c">
+        <div class="phone" aria-hidden="true">
+          <div class="ls-inline">sin redes 1h12 · récord 3h42</div>
+          <div class="ls-time">9:41</div>
+          <div class="ls-row">
+            <div class="wr">
+              <div class="tri">
+                <div><div class="lab"><span>IG</span></div><div class="big">45m</div><div class="bar"><i style="--w:100%"></i></div></div>
+                <div><div class="lab"><span>FB</span></div><div class="big">12m</div><div class="bar"><i style="--w:40%"></i></div></div>
+                <div><div class="lab"><span>Chrome</span></div><div class="big">20m</div><div class="bar"><i style="--w:33%"></i></div></div>
+              </div>
+            </div>
+            <div class="wc" style="--p:100"><div><span class="l">IG</span><span class="v">45m</span></div></div>
+            <div class="wc" style="--p:0"><div><span class="l">sin</span><span class="v">1h12</span></div></div>
+          </div>
+          <div class="ls-bottom"><span></span><span></span></div>
+        </div>
+        <div class="how">
+          <h3>Todo junto</h3>
+          <p class="note">Las tres apps en un solo rectangular y la racha sin redes arriba de la hora.</p>
+          <ul>
+            <li><span class="kind">En línea</span><span><span class="chip">sin redes</span> · encima de la hora</span></li>
+            <li><span class="kind">Rectangular</span><span><span class="chip empty">vacío</span></span></li>
+            <li><span class="kind">Circular</span><span><span class="chip">instagram</span></span></li>
+            <li><span class="kind">Circular</span><span><span class="chip">sin redes</span></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Inicio -->
+      <div class="panel p-h">
+        <div class="phone home" aria-hidden="true">
+          <div class="hw hw-apps">
+            <div class="hw-rows">
+              <div class="hw-row"><span class="dot" style="background:#F8DCEA;color:#B8326F">IG</span><div><div class="t"><span>Instagram</span><span style="color:#D23F3F">45m</span></div><div class="bar"><i style="--w:100%;background:#E64040"></i></div></div></div>
+              <div class="hw-row"><span class="dot" style="background:#DCE7F8;color:#2459B8">FB</span><div><div class="t"><span>Facebook</span><span style="color:#2E9E6A">12m</span></div><div class="bar"><i style="--w:40%;background:#33B373"></i></div></div></div>
+              <div class="hw-row"><span class="dot" style="background:#D8EEF6;color:#14789E">Ch</span><div><div class="t"><span>Chrome</span><span style="color:#2E9E6A">20m</span></div><div class="bar"><i style="--w:33%;background:#33B373"></i></div></div></div>
+            </div>
+            <div class="hw-total"><div class="h">Hoy</div><div class="n">1h 17m</div><div class="h">act. 9:40</div></div>
+          </div>
+          <div class="hw hw-off">
+            <div class="s">Mayor tiempo sin redes hoy</div>
+            <div class="n">3:42 h</div>
+            <div class="s">Llevas 1h 12m sin redes</div>
+          </div>
+          <div class="icons"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="how">
+          <h3>Pantalla de inicio</h3>
+          <p class="note">Aquí no hay límite de espacio. Los colores cambian de verde a naranja y rojo según tu meta.</p>
+          <ul>
+            <li><span class="kind">Mediano</span><span><span class="chip empty">vacío</span> · las tres apps</span></li>
+            <li><span class="kind">Mediano</span><span><span class="chip">sin redes</span></span></li>
+            <li><span class="kind">Pequeño</span><span><span class="chip empty">vacío</span> · versión corta</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="t-antes">
+  <span class="eyebrow">Antes de empezar</span>
+  <h2 id="t-antes">Qué necesitas</h2>
+  <ul class="limits">
+    <li><b>iPhone con iOS 17 o más reciente</b>Ajustes › General › Información › Versión de iOS.</li>
+    <li><b>La app Atajos</b>Ya viene en el iPhone. Si la borraste, está gratis en la App Store.</li>
+    <li><b>La app Scriptable</b>Gratis. Es la que dibuja los widgets. Se instala en el paso 1.</li>
+    <li><b>Instagram, Facebook y Chrome</b>Las que uses. Si no usas alguna, salta sus automatizaciones.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="t-pasos">
+  <span class="eyebrow">Instalación</span>
+  <h2 id="t-pasos">Paso a paso</h2>
+  <p class="note">Puedes ir marcando cada paso como hecho; se queda guardado si abres esta guía en Safari.</p>
+
+  <ol class="steps">
+    <li class="step" id="s1">
+      <div class="step-head"><h3>Instala Scriptable</h3><label class="done-toggle"><input type="checkbox" data-step="s1"> Hecho</label></div>
+      <ol>
+        <li>Abre la App Store y busca <b>Scriptable</b>, de Simon Støvring. Es gratis.</li>
+        <li>Instálala y ábrela una vez.</li>
+      </ol>
+      <p><a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Abrir Scriptable en la App Store</a></p>
+    </li>
+
+    <li class="step" id="s2">
+      <div class="step-head"><h3>Pega el instalador</h3><label class="done-toggle"><input type="checkbox" data-step="s2"> Hecho</label></div>
+      <p>Este script descarga los otros dos y sirve después para actualizar.</p>
+      <ol>
+        <li>Copia el código de abajo. <span class="js-only">Usa el botón.</span> Si no ves botón, mantén presionado el código y elige <b>Seleccionar todo</b> y luego <b>Copiar</b>.</li>
+        <li>En Scriptable toca <b>+</b> arriba a la derecha y pega.</li>
+        <li>Toca el título de arriba y ponle de nombre <code>TiempoP Actualizar</code>. Toca <b>Done</b>.</li>
+        <li>Toca la tarjeta <b>TiempoP Actualizar</b> para ejecutarla.</li>
+        <li>Debe salir <b>TiempoP instalado</b> con ✅ junto a <b>TiempoP Registro</b> y <b>TiempoP Widget</b>.</li>
+      </ol>
+      <button class="btn js-only" type="button" data-copy-target="updater-code">Copiar instalador</button>
+      <div class="codebox"><pre id="updater-code">{{UPDATER}}</pre></div>
+    </li>
+
+    <li class="step" id="s3">
+      <div class="step-head"><h3>Crea la primera automatización</h3><label class="done-toggle"><input type="checkbox" data-step="s3"> Hecho</label></div>
+      <p>Le avisa a TiempoP cada vez que abres Instagram. Esta es la que más pasos tiene; las demás se copian de ella.</p>
+      <ol>
+        <li>Abre <b>Atajos</b>, ve a la pestaña <b>Automatización</b> y toca <b>+</b>.</li>
+        <li>Si aparece «¿Qué quieres que haga tu atajo?», toca la <b>X</b> junto a la caja de texto y luego <b>Editar</b>.</li>
+        <li>Toca <b>Automatización</b>, elige <b>App</b>, luego <b>Instagram</b> y deja solo <b>Se abre</b>. Debe quedar «Al abrir Instagram».</li>
+        <li>Toca el <b>&gt;</b> junto a Instagram. Deja <b>Automatización</b> encendido y <b>Notificar</b> apagado.</li>
+        <li>En <b>Buscar</b> escribe <code>Texto</code>, agrega esa acción y escribe <code>instagram abrir</code>.</li>
+        <li>En <b>Buscar</b> escribe <code>Run Script</code> y elige la de <b>Scriptable</b>. En Script elige <b>TiempoP Registro</b>.</li>
+        <li><b>Mantén presionado</b> el botón <b>Parameter</b>, elige <b>Seleccionar variable</b> y toca la caja <b>Texto</b>. Ahora Parameter debe decir «Texto».</li>
+        <li>Toca el nombre de arriba, llámalo <code>IG abrir</code> y regresa con <b>&lt;</b> para guardar.</li>
+      </ol>
+      <p class="warn">Si tocas <b>Parameter</b> rápido se abren tus archivos. Ciérralos y usa la caja <b>Texto</b> como dice el paso 7.</p>
+    </li>
+
+    <li class="step" id="s4">
+      <div class="step-head"><h3>Duplica para las otras cinco</h3><label class="done-toggle"><input type="checkbox" data-step="s4"> Hecho</label></div>
+      <p>En la lista de Automatización, mantén presionada <b>IG abrir</b> y toca <b>Duplicar</b>. En cada copia cambia el disparador y el texto como dice la tabla.</p>
+      <p class="warn"><b>Importante:</b> iOS apaga las copias. Arriba dirán «Automatización desactivada». Toca el <b>&gt;</b> del disparador y enciende <b>Automatización</b> en cada una, o esa app nunca dejará de contar.</p>
+      <div class="matrix-wrap">
+        <table>
+          <thead><tr><th>Listo</th><th>Nombre</th><th>Disparador</th><th>Texto</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" data-step="m1" aria-label="IG abrir lista"></td><td>IG abrir</td><td>Al abrir Instagram</td><td><code class="chip copy-chip" tabindex="0">instagram abrir</code></td></tr>
+            <tr><td><input type="checkbox" data-step="m2" aria-label="IG cerrar lista"></td><td>IG cerrar</td><td>Al cerrar Instagram</td><td><code class="chip copy-chip" tabindex="0">instagram cerrar</code></td></tr>
+            <tr><td><input type="checkbox" data-step="m3" aria-label="FB abrir lista"></td><td>FB abrir</td><td>Al abrir Facebook</td><td><code class="chip copy-chip" tabindex="0">facebook abrir</code></td></tr>
+            <tr><td><input type="checkbox" data-step="m4" aria-label="FB cerrar lista"></td><td>FB cerrar</td><td>Al cerrar Facebook</td><td><code class="chip copy-chip" tabindex="0">facebook cerrar</code></td></tr>
+            <tr><td><input type="checkbox" data-step="m5" aria-label="Chrome abrir lista"></td><td>Chrome abrir</td><td>Al abrir Chrome</td><td><code class="chip copy-chip" tabindex="0">chrome abrir</code></td></tr>
+            <tr><td><input type="checkbox" data-step="m6" aria-label="Chrome cerrar lista"></td><td>Chrome cerrar</td><td>Al cerrar Chrome</td><td><code class="chip copy-chip" tabindex="0">chrome cerrar</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">«Al cerrar» se dispara cuando sales de la app: al ir al inicio, cambiar de app o bloquear el teléfono. No hace falta cerrarla del todo.</p>
+    </li>
+
+    <li class="step" id="s5">
+      <div class="step-head"><h3>Haz una prueba</h3><label class="done-toggle"><input type="checkbox" data-step="s5"> Hecho</label></div>
+      <ol>
+        <li>Usa Instagram uno o dos minutos y vuelve al inicio.</li>
+        <li>Abre Scriptable y toca <b>TiempoP Registro</b>.</li>
+        <li>Debe decir <b>instagram: 1 min</b> o <b>2 min</b>, sin «(abierta)». En <b>Últimos eventos</b> deben aparecer <code>instagram abrir</code> y <code>instagram cerrar</code>.</li>
+        <li>Si quieres empezar el día en cero, toca <b>Reiniciar hoy</b>.</li>
+      </ol>
+    </li>
+
+    <li class="step" id="s6">
+      <div class="step-head"><h3>Pon los widgets</h3><label class="done-toggle"><input type="checkbox" data-step="s6"> Hecho</label></div>
+      <p>Usa la combinación que elegiste arriba. Cada widget se configura igual; solo cambia el tamaño y lo que escribes en <b>Parameter</b>.</p>
+      <ol>
+        <li>Con la pantalla de bloqueo visible, mantén presionado el fondo y toca <b>Personalizar</b> y luego <b>Pantalla de bloqueo</b>.</li>
+        <li>Toca la fila de widgets bajo la hora. Quita los que no quieras con <b>–</b>.</li>
+        <li>Busca <b>Scriptable</b> y agrega el tamaño que toca: rectangular o circular.</li>
+        <li>Toca el widget recién puesto. En <b>Script</b> elige <b>TiempoP Widget</b> y en <b>Parameter</b> escribe lo de tu tarjeta.</li>
+        <li>Para el widget en línea, toca la <b>fecha</b> encima de la hora y repite lo mismo.</li>
+        <li>Toca fuera de los menús y luego <b>OK</b>.</li>
+      </ol>
+      <p class="warn">En <b>Script</b> siempre va <b>TiempoP Widget</b>, nunca TiempoP Registro.</p>
+      <p class="note">Pantalla de inicio: mantén presionado el inicio, toca <b>Editar</b> › <b>Agregar widget</b> › <b>Scriptable</b> › <b>Mediano</b> y configúralo igual.</p>
+    </li>
+
+    <li class="step" id="s7">
+      <div class="step-head"><h3>Ajusta tus metas</h3><label class="done-toggle"><input type="checkbox" data-step="s7"> Hecho</label></div>
+      <p>Opcional. Las metas solo colorean las barras y llenan los anillos; no bloquean nada.</p>
+      <ol>
+        <li>En Scriptable mantén presionada la tarjeta <b>TiempoP Widget</b> y elige editar.</li>
+        <li>Cambia los minutos de esta línea, cerca del inicio:</li>
+      </ol>
+      <div class="codebox"><pre>const GOALS = { instagram: 30, facebook: 30, chrome: 60 };</pre></div>
+      <p class="note">Si después ejecutas TiempoP Actualizar, la línea vuelve a 30, 30 y 60. Ajústala otra vez.</p>
+    </li>
+  </ol>
+</section>
+
+<section aria-labelledby="t-param">
+  <span class="eyebrow">Referencia</span>
+  <h2 id="t-param">Qué escribir en Parameter</h2>
+  <div class="matrix-wrap">
+    <table>
+      <thead><tr><th>Parameter</th><th>Qué muestra</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip empty">vacío</span></td><td>Instagram, Facebook y Chrome</td></tr>
+        <tr><td><span class="chip">instagram</span></td><td>Solo Instagram, con números más grandes y su meta</td></tr>
+        <tr><td><span class="chip">facebook</span> <span class="chip">chrome</span></td><td>Solo esa app</td></tr>
+        <tr><td><span class="chip">facebook chrome</span></td><td>Dos apps en columnas</td></tr>
+        <tr><td><span class="chip">sin redes</span></td><td>Cuánto llevas sin abrir ninguna de las tres y tu récord del día</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="t-faq">
+  <span class="eyebrow">Si algo no cuadra</span>
+  <h2 id="t-faq">Problemas comunes</h2>
+  <div class="faq">
+    <details>
+      <summary>Una app sigue sumando minutos aunque ya salí</summary>
+      <div><p>Su automatización de «cerrar» está apagada. Abre esa automatización en Atajos; si arriba dice «Automatización desactivada», toca el <b>&gt;</b> y enciéndela. Revisa también que el texto diga <code>cerrar</code> y no <code>abrir</code>.</p></div>
+    </details>
+    <details>
+      <summary>El widget muestra un dato viejo</summary>
+      <div>
+        <p>iOS decide cuándo redibuja los widgets, normalmente cada 5 a 20 minutos, y Atajos no puede forzarlo. El conteo sí se guarda al momento; solo el dibujo llega tarde. La hora <b>act.</b> te dice de cuándo es lo que ves.</p>
+        <p>Para actualizarlo al instante: en la configuración del widget cambia <b>When Interacting</b> a <b>Run Script</b>. Al tocarlo se abre Scriptable un segundo; ciérralo y el widget se pone al día.</p>
+      </div>
+    </details>
+    <details>
+      <summary>Al tocar Parameter se abren mis archivos</summary>
+      <div><p>Es normal. Ciérralos, agrega antes una acción <b>Texto</b> con lo que va escrito, y luego mantén presionado <b>Parameter</b> › <b>Seleccionar variable</b> › toca la caja Texto.</p></div>
+    </details>
+    <details>
+      <summary>El widget dice que usa «TiempoP Registro»</summary>
+      <div><p>Elegiste el script equivocado. Edita el widget y en <b>Script</b> elige <b>TiempoP Widget</b>.</p></div>
+    </details>
+    <details>
+      <summary>En Últimos eventos aparece «no reconocido»</summary>
+      <div><p>Una automatización corrió sin texto. Revisa que en las seis el <b>Parameter</b> diga «Texto» y que la caja Texto tenga lo de la tabla.</p></div>
+    </details>
+    <details>
+      <summary>¿Cómo actualizo cuando haya mejoras?</summary>
+      <div><p>Toca la tarjeta <b>TiempoP Actualizar</b> en Scriptable. Tus tiempos e historial no se borran.</p></div>
+    </details>
+  </div>
+</section>
+
+<section aria-labelledby="t-mide">
+  <span class="eyebrow">Para que no haya sorpresas</span>
+  <h2 id="t-mide">Qué mide y qué no</h2>
+  <ul class="limits">
+    <li><b>Mide Instagram, Facebook y Chrome</b>Desde que abres cada app hasta que sales, al segundo. Abrir una app cierra la sesión de las otras.</li>
+    <li><b>«Sin redes» no es «sin teléfono»</b>iOS no deja que Atajos sepa cuándo desbloqueas. Mide cuánto llevas sin abrir esas tres apps.</li>
+    <li><b>Instagram desde Chrome cuenta como Chrome</b>El navegador no distingue qué página ves.</li>
+    <li><b>No mide el tiempo total del iPhone</b>Para eso agrega el widget de Tiempo en pantalla que trae iOS.</li>
+    <li><b>Si se pierde un aviso de cierre</b>La sesión se corta sola a los 90 minutos para no inflar el día.</li>
+    <li><b>Privacidad</b>No hay cuentas ni servidores. Los datos se guardan en Scriptable, en tu iPhone. El instalador solo descarga los scripts desde GitHub.</li>
+  </ul>
+</section>
+
+<footer>
+  <span>TiempoP · el código está en <a href="https://github.com/pabloecomsy/AppControlTiempoP/tree/claude/vibrant-newton-uj9hl3/atajos-scriptable" target="_blank" rel="noopener">GitHub</a>.</span>
+  <span>Si abriste este archivo desde WhatsApp y no puedes copiar, ábrelo en Safari con el botón de compartir.</span>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  document.documentElement.classList.add("has-js");
+
+  function copyText(text, el) {
+    function done() {
+      el.classList.add("copied");
+      var old = el.getAttribute("data-label") || el.textContent;
+      el.setAttribute("data-label", old);
+      if (el.tagName === "BUTTON") el.textContent = "Copiado";
+      setTimeout(function () {
+        el.classList.remove("copied");
+        if (el.tagName === "BUTTON") el.textContent = old;
+      }, 1600);
+    }
+    function fallback() {
+      var target = el.getAttribute("data-copy-target") ? document.getElementById(el.getAttribute("data-copy-target")) : el;
+      var range = document.createRange();
+      range.selectNodeContents(target);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else { fallback(); }
+    } catch (e) { fallback(); }
+  }
+
+  document.querySelectorAll("[data-copy-target]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      copyText(document.getElementById(btn.getAttribute("data-copy-target")).textContent, btn);
+    });
+  });
+  document.querySelectorAll(".copy-chip").forEach(function (chip) {
+    function go() { copyText(chip.textContent, chip); }
+    chip.addEventListener("click", go);
+    chip.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+
+  var KEY = "tiempop-guia-v1";
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function sync(box) {
+    var step = document.getElementById(box.getAttribute("data-step"));
+    if (step) step.classList.toggle("done", box.checked);
+  }
+  document.querySelectorAll("input[data-step]").forEach(function (box) {
+    box.checked = !!saved[box.getAttribute("data-step")];
+    sync(box);
+    box.addEventListener("change", function () {
+      saved[box.getAttribute("data-step")] = box.checked;
+      sync(box);
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+    });
+  });
+})();
+</script>

@@ -90,3 +90,13 @@ En **TiempoP Widget**, arriba del todo, está `GOALS` con los minutos por app (3
 
 - `TiempoP Registro.js`: lo llaman las automatizaciones. Guarda `tiempop.json` dentro de Scriptable con los segundos por app, las sesiones abiertas y 30 días de historial. Abierto a mano muestra el resumen y permite reiniciar el día.
 - `TiempoP Widget.js`: el widget. Solo lee.
+
+## Guía para compartir
+
+`guia/TiempoP-guia.html` es una guía interactiva para instalar todo desde cero, pensada para mandarla por WhatsApp. En un iPhone nuevo basta con pegar el script **TiempoP Actualizar**: descarga los otros dos.
+
+Para regenerarla después de cambiar `guia/fuente.html` o el instalador:
+
+```bash
+python3 guia/build.py "atajos-scriptable/TiempoP Actualizar.js" guia/TiempoP-guia.html
+```

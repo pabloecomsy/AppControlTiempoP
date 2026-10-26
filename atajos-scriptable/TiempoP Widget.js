@@ -16,6 +16,7 @@ const TITLES = { instagram: "Instagram", facebook: "Facebook", chrome: "Chrome" 
 const SHORT = { instagram: "IG", facebook: "FB", chrome: "Chrome" };
 const SYMBOLS = { instagram: "camera.fill", facebook: "person.2.fill", chrome: "globe" };
 const COLORS = { instagram: "#DB408C", facebook: "#296BDB", chrome: "#1A9ECC" };
+const VERSION = "2026-10-26.2";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const MAX_SESSION_MIN = 90;
 const FILE = "tiempop.json";
@@ -44,7 +45,7 @@ function load(now) {
     // El widget no escribe: solo muestra el día de hoy desde cero, respetando
     // las sesiones que siguen abiertas desde medianoche.
     const fresh = { dayKey: today, seconds: {}, openAt: {}, sessions: [], updatedAt: null,
-                    history: data.history || [], lastCloseAt: data.lastCloseAt };
+                    history: data.history || [], lastCloseAt: data.lastCloseAt, log: data.log || [] };
     for (const slot of Object.keys(data.openAt)) fresh.openAt[slot] = startOfDay(now).getTime();
     data = fresh;
   }
@@ -189,10 +190,29 @@ const chosen = chosenSlots(args.widgetParameter);
 const offlineMode = /sin\s*redes|racha|offline|desconex|pausa/i.test(String(args.widgetParameter || ""));
 
 // Datos de "sin redes".
-const openNow = Object.keys(data.openAt).length > 0;
-const recordMin = Math.floor(longestGap(data.sessions, now.getTime(), openNow) / 60000);
-const hasRecord = data.sessions.length > 0;
-const streakStart = !openNow && data.lastCloseAt ? new Date(data.lastCloseAt) : null;
+// Una app solo cuenta como "abierta" si lleva menos del tope; si no, su cierre se
+// perdió y se toma como cerrada en inicio + tope.
+const MAX_MS = MAX_SESSION_MIN * 60000;
+const openNow = SLOTS.some(s => data.openAt[s] && now.getTime() - data.openAt[s] < MAX_MS);
+const sessionsNow = data.sessions.slice();
+let lastExit = data.lastCloseAt || 0;
+for (const s of Object.keys(data.openAt)) {
+  const t = data.openAt[s];
+  if (now.getTime() - t >= MAX_MS) { sessionsNow.push([s, t, t + MAX_MS]); lastExit = Math.max(lastExit, t + MAX_MS); }
+}
+for (const x of sessionsNow) lastExit = Math.max(lastExit, x[2]);
+// Las sesiones en curso cuentan para el récord (cierran el hueco anterior).
+for (const s of Object.keys(data.openAt)) {
+  const t = data.openAt[s];
+  if (now.getTime() - t < MAX_MS) sessionsNow.push([s, t, now.getTime()]);
+}
+if (!lastExit) {
+  // Respaldo para datos anteriores: última salida según la bitácora del registro.
+  for (const e of data.log || []) if (e.r === "ok" && /cerr|clos|fin/i.test(e.p || "")) lastExit = Math.max(lastExit, e.t);
+}
+const recordMin = Math.floor(longestGap(sessionsNow, now.getTime(), openNow) / 60000);
+const hasRecord = sessionsNow.length > 0;
+const streakStart = !openNow && lastExit ? new Date(lastExit) : null;
 const streakMin = streakStart ? Math.floor((now.getTime() - streakStart.getTime()) / 60000) : 0;
 
 // Contador que iOS actualiza solo cada segundo, sin esperar al refresco del widget.
@@ -210,7 +230,7 @@ function renderOffline() {
   const white = Color.white();
   const soft = new Color("#FFFFFF", 0.75);
   if (family === "accessoryInline") {
-    const now_ = openNow ? "en redes" : streakStart ? `sin redes ${compact(streakMin)}` : "sin datos";
+    const now_ = openNow ? "en redes" : streakStart ? `sin redes ${compact(streakMin)}` : "usa una app";
     w.addText(`${now_} · récord ${hasRecord ? compact(recordMin) : "—"}`);
     return;
   }
@@ -234,7 +254,7 @@ function renderOffline() {
     const head = w.addText(openNow ? "En redes ahora" : "Llevas sin redes");
     head.font = Font.semiboldSystemFont(12); head.textColor = soft; head.lineLimit = 1;
     if (openNow || !streakStart) {
-      const v = w.addText(openNow ? "—" : "sin datos");
+      const v = w.addText(openNow ? "—" : "usa una app");
       v.font = Font.boldRoundedSystemFont(26); v.textColor = white; v.lineLimit = 1;
     } else {
       addLiveTimer(w, streakStart, 30, white);
@@ -260,7 +280,7 @@ function renderOffline() {
   const row = w.addStack();
   row.layoutHorizontally(); row.centerAlignContent(); row.spacing = 4;
   row.addSpacer();
-  const lbl = row.addText(openNow ? "Ahora estás en redes" : streakStart ? "Llevas" : "Sin datos todavía");
+  const lbl = row.addText(openNow ? "Ahora estás en redes" : streakStart ? "Llevas" : "Usa una app para empezar");
   lbl.font = Font.systemFont(12); lbl.textColor = soft;
   if (!openNow && streakStart) {
     const d = addLiveTimer(row, streakStart, 13, white);

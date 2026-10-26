@@ -7,6 +7,7 @@
 //
 // Guarda todo en un archivo JSON dentro de Scriptable. El widget "TiempoP Widget" lo lee.
 
+const VERSION = "2026-10-26.2";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const ALIAS = {
   ig: "instagram", insta: "instagram", instagram: "instagram",
@@ -70,6 +71,8 @@ function load(now = new Date()) {
     data.sessions = [];
     data.updatedAt = null;
   }
+  sweepStale(data, now);
+  if (!data.lastCloseAt) data.lastCloseAt = lastExitFromLog(data) || null;
   return data;
 }
 
@@ -92,6 +95,26 @@ function closeSession(data, slot, now) {
   data.lastCloseAt = Math.max(data.lastCloseAt || 0, openAt + elapsed);
   delete data.openAt[slot];
   return elapsed / 1000;
+}
+
+// Una sesión que lleva más del tope abierta es un cierre perdido: se cierra en
+// inicio + tope, para que no bloquee el contador "sin redes" ni sume de más.
+function sweepStale(data, now) {
+  for (const slot of Object.keys(data.openAt)) {
+    const openAt = data.openAt[slot];
+    if (now.getTime() - openAt >= MAX_SESSION_MIN * 60000) {
+      closeSession(data, slot, new Date(openAt + MAX_SESSION_MIN * 60000));
+    }
+  }
+}
+
+// Respaldo para datos anteriores a esta versión: última salida según la bitácora.
+function lastExitFromLog(data) {
+  let t = 0;
+  for (const e of data.log || []) {
+    if (e.r === "ok" && /cerr|clos|fin/i.test(e.p || "")) t = Math.max(t, e.t);
+  }
+  return t;
 }
 
 function openSession(data, slot, now) {
@@ -181,12 +204,13 @@ if (event === "reset") {
   // Abierto a mano: resumen, últimos eventos y opción de reiniciar.
   const lines = SLOTS.map(s => `${s}: ${fmt(minutesToday(data, s, now))}${data.openAt[s] ? " (abierta)" : ""}`);
   const openNow = Object.keys(data.openAt).length > 0;
-  const rec = Math.floor(longestGap(data.sessions, now.getTime(), openNow) / 60000);
-  lines.push("", `Récord sin redes hoy: ${data.sessions.length ? fmt(rec) : "—"}`);
+  const withOpen = data.sessions.concat(Object.keys(data.openAt).map(s => [s, data.openAt[s], now.getTime()]));
+  const rec = Math.floor(longestGap(withOpen, now.getTime(), openNow) / 60000);
+  lines.push("", `Récord sin redes hoy: ${withOpen.length ? fmt(rec) : "—"}`);
   if (!openNow && data.lastCloseAt) lines.push(`Llevas sin redes: ${fmt(Math.floor((now.getTime() - data.lastCloseAt) / 60000))}`);
   const events = data.log.slice(-10).reverse().map(e => `${hhmm(e.t)}  ${e.p}${e.r === "ok" ? "" : "  ⚠️ " + e.r}`);
   const a = new Alert();
-  a.title = `Hoy ${data.dayKey}`;
+  a.title = `Hoy ${data.dayKey}  ·  v${VERSION}`;
   a.message = lines.join("\n") + "\n\nÚltimos eventos:\n" + (events.length ? events.join("\n") : "ninguno todavía");
   a.addAction("OK");
   a.addDestructiveAction("Reiniciar hoy");

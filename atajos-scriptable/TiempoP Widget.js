@@ -16,7 +16,7 @@ const TITLES = { instagram: "Instagram", facebook: "Facebook", chrome: "Chrome" 
 const SHORT = { instagram: "IG", facebook: "FB", chrome: "Chrome" };
 const SYMBOLS = { instagram: "camera.fill", facebook: "person.2.fill", chrome: "globe" };
 const COLORS = { instagram: "#DB408C", facebook: "#296BDB", chrome: "#1A9ECC" };
-const VERSION = "2026-10-26.5";
+const VERSION = "2026-10-26.6";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const MAX_SESSION_MIN = 90;
 const FILE = "tiempop.json";
@@ -318,18 +318,34 @@ if (offlineMode) {
     t.lineLimit = 1;
     t.minimumScaleFactor = 0.6;
     head.addSpacer();
-    if (n === 1) {
-      const g = head.addText(`meta ${short(GOALS[s])} · ${fresh}`);
-      g.font = Font.systemFont(10);
-      g.textColor = new Color("#FFFFFF", 0.7);
-      g.lineLimit = 1;
-    }
 
-    const v = col.addText(compact(minutes[s]));
+    // Con una sola app sobra espacio a la derecha del número: ahí van la meta y
+    // la hora de actualización, en dos líneas, sin cortarse.
+    const valueRow = n === 1 ? col.addStack() : col;
+    if (n === 1) {
+      valueRow.layoutHorizontally();
+      valueRow.centerAlignContent();
+    }
+    const v = valueRow.addText(compact(minutes[s]));
     v.font = Font.boldRoundedSystemFont(valueSize);
     v.textColor = Color.white();
     v.lineLimit = 1;
     v.minimumScaleFactor = 0.5;
+    if (n === 1) {
+      valueRow.addSpacer();
+      const info = valueRow.addStack();
+      info.layoutVertically();
+      info.spacing = 1;
+      for (const line of [`meta ${short(GOALS[s])}`, fresh]) {
+        const r = info.addStack();
+        r.addSpacer();
+        const x = r.addText(line);
+        x.font = Font.mediumSystemFont(11);
+        x.textColor = new Color("#FFFFFF", 0.75);
+        x.lineLimit = 1;
+        x.minimumScaleFactor = 0.8;
+      }
+    }
 
     const b = col.addImage(barImage(colW, n === 1 ? 5 : 4, ratio(minutes[s], GOALS[s]), Color.white()));
     b.imageSize = new Size(colW, n === 1 ? 5 : 4);

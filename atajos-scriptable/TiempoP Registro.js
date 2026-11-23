@@ -30,7 +30,7 @@ const ALERT_ID = "tiempop-limite";
 // Este bloque es idéntico en "TiempoP Registro" y "TiempoP Widget". Así el resumen
 // y el widget calculan lo mismo con los mismos datos. Se edita en
 // pruebas/nucleo.js y se copia a los dos scripts con: node pruebas/probar.js --sync
-const VERSION = "2026-11-22.3";
+const VERSION = "2026-11-23.1";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const ALIAS = {
   ig: "instagram", insta: "instagram", instagram: "instagram",

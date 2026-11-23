@@ -10,7 +10,10 @@
 // inicio (pequeño, mediano). Si una app está abierta ahora mismo, el tiempo
 // mostrado incluye la sesión en curso.
 
-// Metas diarias en minutos (solo colorean las barras: verde / naranja / rojo).
+// Meta diaria de redes: total entre Instagram, Facebook y Chrome, en minutos.
+// Colorea el total: verde hasta 60 %, naranja hasta 100 %, rojo al pasarla.
+const DAILY_GOAL = 60;
+// Metas por app en minutos (solo colorean la barra de cada app).
 const GOALS = { instagram: 30, facebook: 30, chrome: 60 };
 const TITLES = { instagram: "Instagram", facebook: "Facebook", chrome: "Chrome" };
 const SHORT = { instagram: "IG", facebook: "FB", chrome: "Chrome" };
@@ -24,7 +27,7 @@ const REFRESH_MINUTES = 1;
 // Este bloque es idéntico en "TiempoP Registro" y "TiempoP Widget". Así el resumen
 // y el widget calculan lo mismo con los mismos datos. Se edita en
 // pruebas/nucleo.js y se copia a los dos scripts con: node pruebas/probar.js --sync
-const VERSION = "2026-11-22.3";
+const VERSION = "2026-11-23.1";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const ALIAS = {
   ig: "instagram", insta: "instagram", instagram: "instagram",
@@ -466,12 +469,12 @@ if (offlineMode) {
   const hi = head.addImage(symbolImage("hourglass", 11));
   hi.imageSize = new Size(12, 12);
   hi.tintColor = Color.gray();
-  const ht = head.addText("Hoy en redes");
+  const ht = head.addText(`Hoy · meta ${short(DAILY_GOAL)}`);
   ht.font = Font.mediumSystemFont(11);
   ht.textColor = Color.gray();
   const tv = w.addText(short(total));
   tv.font = Font.boldRoundedSystemFont(26);
-  tv.textColor = toneColor(total, SLOTS.reduce((a, s) => a + GOALS[s], 0));
+  tv.textColor = toneColor(total, DAILY_GOAL);
   tv.minimumScaleFactor = 0.6;
   w.addSpacer(4);
   for (const s of SLOTS) {
@@ -551,13 +554,13 @@ if (offlineMode) {
   ri.imageSize = new Size(18, 18);
   ri.tintColor = Color.gray();
   ri.centerAlignImage();
-  const rl = right.addText("Hoy");
+  const rl = right.addText(`Hoy · meta ${short(DAILY_GOAL)}`);
   rl.font = Font.systemFont(10);
   rl.textColor = Color.gray();
   rl.centerAlignText();
   const rv = right.addText(short(total));
   rv.font = Font.boldRoundedSystemFont(22);
-  rv.textColor = toneColor(total, SLOTS.reduce((a, s) => a + GOALS[s], 0));
+  rv.textColor = toneColor(total, DAILY_GOAL);
   rv.minimumScaleFactor = 0.7;
   rv.lineLimit = 1;
   rv.centerAlignText();

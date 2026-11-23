@@ -119,6 +119,7 @@ const D1 = "2026-11-22", D2 = "2026-11-23";
   w = await widget(D1, "10:40", { family: "accessoryInline", widgetParam: "sin redes" });
   check("bloqueo, línea sin redes: hora de inicio, no duración", w[0] === "sin redes desde 10:12 · réc 28m", w.join("|"));
   w = await widget(D1, "10:40", { family: "small" });
+  check("pequeño y mediano: meta diaria 1h", w.includes("Hoy · meta 1h") && (await widget(D1, "10:40")).includes("Hoy · meta 1h"), w.join("|"));
   check("pequeño: muestra hora de dibujo", w.includes("act. 10:40"), w.join("|"));
 
   // 2. Cierre perdido: abrir 10:00 y nada más. A las 14:00 cuenta el tope y marca ≈.

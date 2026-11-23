@@ -89,7 +89,7 @@ Abre **TiempoP Registro** a mano para **Probar alerta** (la primera vez iOS pide
 
 ## Metas y colores
 
-En **TiempoP Widget**, arriba del todo, está `GOALS` con los minutos por app (30, 30, 60). Las barras van verde → naranja (60 %) → rojo (100 %). Cámbialos a tu gusto.
+En **TiempoP Widget**, arriba del todo, están `DAILY_GOAL` (meta diaria total de redes: 60 min) y `GOALS` con los minutos por app (30, 30, 60). El total y las barras van verde → naranja (60 %) → rojo (100 %). Cámbialos a tu gusto.
 
 ## Qué esperar
 

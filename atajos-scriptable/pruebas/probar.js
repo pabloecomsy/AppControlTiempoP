@@ -105,6 +105,8 @@ const D1 = "2026-11-22", D2 = "2026-11-23";
   let w = await widget(D1, "10:05");
   check("en curso: el widget cuenta la sesión abierta (5m)", w.includes("5m"), w.join("|"));
   check("en curso: indica app en uso y hora de dibujo", w.includes("IG en uso") && w.includes("act. 10:05"), w.join("|"));
+  w = await widget(D1, "10:05", { family: "accessoryRectangular", widgetParam: "ig" });
+  check("bloqueo, rectangular: dice en uso y hora", w.includes("en uso") && w.includes("act. 10:05"), w.join("|"));
   await ev(D1, "10:12", "instagram cerrar");
   w = await widget(D1, "10:40");
   let s = await summary(D1, "10:40");
@@ -114,6 +116,8 @@ const D1 = "2026-11-22", D2 = "2026-11-23";
   check("llevas sin redes 28 min en el resumen", s.includes("Llevas sin redes: 28 min"), s);
   w = await widget(D1, "10:40", { widgetParam: "sin redes" });
   check("widget sin redes: mismo dato (28m)", w.some(t => t.includes("Llevas 28m sin redes")), w.join("|"));
+  w = await widget(D1, "10:40", { family: "accessoryInline", widgetParam: "sin redes" });
+  check("bloqueo, línea sin redes: hora de inicio, no duración", w[0] === "sin redes desde 10:12 · réc 28m", w.join("|"));
   w = await widget(D1, "10:40", { family: "small" });
   check("pequeño: muestra hora de dibujo", w.includes("act. 10:40"), w.join("|"));
 
@@ -124,6 +128,10 @@ const D1 = "2026-11-22", D2 = "2026-11-23";
   s = await summary(D1, "14:00");
   check("cierre perdido: widget ≈1h 30m y no 'en uso'", w.includes("≈1h 30m") && !w.some(t => t.includes("en uso")), w.join("|"));
   check("cierre perdido: resumen ≈ y sin (abierta)", s.includes("facebook: ≈ 1 h 30 min\n") && s.includes("1 cierre perdido"), s);
+  for (const [family, widgetParam, want] of [["accessoryRectangular", "fb", "≈1h30"], ["accessoryCircular", "fb", "≈1h30"], ["accessoryInline", null, "IG 0m · FB ≈1h30 · Chrome 0m"]]) {
+    w = await widget(D1, "14:00", { family, widgetParam });
+    check(`cierre perdido: ≈ en ${family}`, w.includes(want), w.join("|"));
+  }
   check("cierre perdido: sin redes cuenta desde 11:30", s.includes("Llevas sin redes: 2 h 30 min"), s);
 
   // 3. Medianoche con cierre perdido: abrir 23:50, dormir. A las 08:00 hoy = 0.

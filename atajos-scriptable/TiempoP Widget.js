@@ -24,7 +24,7 @@ const REFRESH_MINUTES = 1;
 // Este bloque es idéntico en "TiempoP Registro" y "TiempoP Widget". Así el resumen
 // y el widget calculan lo mismo con los mismos datos. Se edita en
 // pruebas/nucleo.js y se copia a los dos scripts con: node pruebas/probar.js --sync
-const VERSION = "2026-11-22.2";
+const VERSION = "2026-11-22.3";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const ALIAS = {
   ig: "instagram", insta: "instagram", instagram: "instagram",
@@ -299,8 +299,10 @@ function renderOffline() {
   const white = Color.white();
   const soft = new Color("#FFFFFF", 0.75);
   if (family === "accessoryInline") {
-    const now_ = openNow ? "en redes" : streakStart ? `sin redes ${compact(streakMin)}` : "usa una app";
-    w.addText(`${now_} · récord ${hasRecord ? compact(recordMin) : "—"}`);
+    // Se muestra desde qué hora llevas sin redes, no cuántos minutos: iOS puede
+    // tardar en redibujar esta línea y una duración se queda vieja; la hora no.
+    const now_ = openNow ? "en redes" : streakStart ? `sin redes desde ${clock(new Date(streakStart))}` : "usa una app";
+    w.addText(`${now_} · réc ${hasRecord ? compact(recordMin) : "—"}`);
     return;
   }
   if (family === "accessoryCircular") {
@@ -395,7 +397,7 @@ if (offlineMode) {
       valueRow.layoutHorizontally();
       valueRow.centerAlignContent();
     }
-    const v = valueRow.addText(compact(minutes[s]));
+    const v = valueRow.addText(approx(s, compact(minutes[s])));
     v.font = Font.boldRoundedSystemFont(valueSize);
     v.textColor = Color.white();
     v.lineLimit = 1;
@@ -405,7 +407,7 @@ if (offlineMode) {
       const info = valueRow.addStack();
       info.layoutVertically();
       info.spacing = 1;
-      for (const line of [`meta ${short(GOALS[s])}`, fresh]) {
+      for (const line of [st.openSlots.includes(s) ? "en uso" : `meta ${short(GOALS[s])}`, fresh]) {
         const r = info.addStack();
         r.addSpacer();
         const x = r.addText(line);
@@ -444,7 +446,7 @@ if (offlineMode) {
   const inner = ring.addStack();
   inner.layoutHorizontally();
   inner.addSpacer();
-  const v = inner.addText(compact(minutes[cs]));
+  const v = inner.addText(approx(cs, compact(minutes[cs])));
   v.font = Font.boldRoundedSystemFont(13);
   v.textColor = Color.white();
   v.minimumScaleFactor = 0.6;
@@ -452,7 +454,7 @@ if (offlineMode) {
   inner.addSpacer();
 
 } else if (family === "accessoryInline") {
-  w.addText(`IG ${compact(minutes.instagram)} · FB ${compact(minutes.facebook)} · Chrome ${compact(minutes.chrome)}`);
+  w.addText(SLOTS.map(s => `${SHORT[s]} ${approx(s, compact(minutes[s]))}`).join(" · "));
 
 } else if (family === "small") {
   w.backgroundColor = Color.dynamic(new Color("#FFFFFF"), new Color("#1C1C1E"));

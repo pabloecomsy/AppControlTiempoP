@@ -39,7 +39,7 @@ const ALIAS = {
 };
 // Tope de una sesión. Si iOS no avisa el cierre de una app, la sesión no cuenta más
 // que esto, y el número de esa app se marca como estimado ("≈").
-const MAX_SESSION_MIN = 2;
+const MAX_SESSION_MIN = 90;
 const MAX_MS = MAX_SESSION_MIN * 60000;
 const FILE = "tiempop.json";
 const BACKUP_FILE = "tiempop.respaldo.json";

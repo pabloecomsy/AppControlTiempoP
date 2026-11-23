@@ -104,7 +104,7 @@ const D1 = "2026-11-22", D2 = "2026-11-23";
   await ev(D1, "10:00", "instagram abrir");
   let w = await widget(D1, "10:05");
   check("en curso: el widget cuenta la sesión abierta (5m)", w.includes("5m"), w.join("|"));
-  check("en curso: indica app en uso y hora de dibujo", w.some(t => t === "IG en uso · act. 10:05"), w.join("|"));
+  check("en curso: indica app en uso y hora de dibujo", w.includes("IG en uso") && w.includes("act. 10:05"), w.join("|"));
   await ev(D1, "10:12", "instagram cerrar");
   w = await widget(D1, "10:40");
   let s = await summary(D1, "10:40");

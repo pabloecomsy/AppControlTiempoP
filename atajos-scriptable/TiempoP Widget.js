@@ -24,7 +24,7 @@ const REFRESH_MINUTES = 1;
 // Este bloque es idéntico en "TiempoP Registro" y "TiempoP Widget". Así el resumen
 // y el widget calculan lo mismo con los mismos datos. Se edita en
 // pruebas/nucleo.js y se copia a los dos scripts con: node pruebas/probar.js --sync
-const VERSION = "2026-11-22.1";
+const VERSION = "2026-11-22.2";
 const SLOTS = ["instagram", "facebook", "chrome"];
 const ALIAS = {
   ig: "instagram", insta: "instagram", instagram: "instagram",
@@ -559,13 +559,20 @@ if (offlineMode) {
   rv.minimumScaleFactor = 0.7;
   rv.lineLimit = 1;
   rv.centerAlignText();
-  // Hora en que se dibujó este widget y, si aplica, qué app estaba en uso en ese
-  // momento. La hora no envejece: "hace X min" dejaba de ser cierto al rato.
-  const rs = right.addText(st.openNow ? `${st.openSlots.map(s => SHORT[s]).join("+")} en uso · ${fresh}` : fresh);
-  rs.font = Font.systemFont(9);
+  // Si una app estaba en uso al dibujar el widget, se dice cuál; debajo, la hora en
+  // que se dibujó. La hora no envejece: "hace X min" dejaba de ser cierto al rato.
+  if (st.openNow) {
+    const ru = right.addText(`${st.openSlots.map(s => SHORT[s]).join("+")} en uso`);
+    ru.font = Font.semiboldSystemFont(10);
+    ru.textColor = new Color("#F2992A");
+    ru.lineLimit = 1;
+    ru.minimumScaleFactor = 0.8;
+    ru.centerAlignText();
+  }
+  const rs = right.addText(fresh);
+  rs.font = Font.systemFont(10);
   rs.textColor = Color.gray();
   rs.lineLimit = 1;
-  rs.minimumScaleFactor = 0.7;
   rs.centerAlignText();
 }
 

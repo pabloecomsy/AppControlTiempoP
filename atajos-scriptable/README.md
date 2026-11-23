@@ -92,8 +92,10 @@ En **TiempoP Widget**, arriba del todo, está `GOALS` con los minutos por app (3
 
 ## Qué esperar
 
-- **Precisión:** la de las automatizaciones de iOS. "Se cierra" dispara al salir de la app o bloquear el teléfono; a veces tarda unos segundos. Si iOS pierde un cierre, la sesión se corta sola a 3 horas y se cierra al siguiente "se abre".
-- **Refresco del widget:** iOS lo redibuja cada pocos minutos, según su presupuesto. El tiempo mostrado puede ir unos minutos atrás. El mediano indica "en uso ahora" o "hace X min".
+- **Precisión:** la de las automatizaciones de iOS. Solo se cuenta el tiempo entre el aviso "se abre" y el aviso "se cierra": una app en segundo plano no suma. "Se cierra" dispara al salir de la app o bloquear el teléfono; a veces tarda unos segundos. Si iOS pierde un cierre, la sesión se cierra al siguiente "se abre" de cualquiera de las tres apps o, como máximo, al llegar al tope de 90 min (`MAX_SESSION_MIN`). En ese caso el número de esa app lleva "≈" en el widget y en el resumen, porque incluye una estimación.
+- **Cortar cierres perdidos:** el registro acepta también `todo cerrar` (u `otra abrir`). Con una automatización extra "cuando se abra WhatsApp, Mensajes, Teléfono…" que mande ese texto, cualquier sesión que se haya quedado abierta se cierra en ese momento en vez de esperar al tope.
+- **Refresco del widget:** iOS lo redibuja cada pocos minutos, según su presupuesto. El tiempo mostrado puede ir unos minutos atrás. Todos los tamaños de pantalla de inicio muestran "act. 5:07" (la hora en que se dibujó) y "en uso" si una app estaba abierta en ese momento.
+- **Medianoche:** una sesión abierta solo pasa al día nuevo si lleva menos del tope; si su cierre se perdió, no suma nada al día nuevo.
 - **Reset:** automático a las 00:00 por fecha; no hace falta otra automatización.
 - **Reinstalar Instagram:** las automatizaciones siguen ligadas a la app; nada se pierde.
 - **Instagram desde Chrome:** cuenta como Chrome.
@@ -113,3 +115,13 @@ Para regenerarla después de cambiar `guia/fuente.html` o el instalador:
 ```bash
 python3 guia/build.py "atajos-scriptable/TiempoP Actualizar.js" guia/TiempoP-guia.html
 ```
+
+## Pruebas
+
+`pruebas/probar.js` ejecuta los dos scripts en Node con un Scriptable simulado y un reloj falso (sesión normal, cierre perdido, medianoche, archivo dañado, cambio de app):
+
+```
+node atajos-scriptable/pruebas/probar.js
+```
+
+El conteo vive en `pruebas/nucleo.js` y se copia idéntico a **TiempoP Registro** y **TiempoP Widget** con `node atajos-scriptable/pruebas/probar.js --sync`, para que el resumen y el widget nunca calculen distinto.

@@ -50,7 +50,7 @@ for (const t of TARGETS) {
   }
   const name = existing.find(n => t.match.test(n)) || t.fallback;
   fm.writeString(fm.joinPath(dir, name), code);
-  const ver = (code.match(/const VERSION = "([^"]+)"/) || [])[1];
+  const ver = (code.match(/^const VERSION = "([^"]+)"/m) || [])[1];
   report.push(`✅ ${name.replace(/\.js$/, "")}${ver ? "  v" + ver : ""}`);
 }
 
